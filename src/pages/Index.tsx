@@ -1,10 +1,38 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, Clock, Heart, ArrowRight, BookOpen, Users, Church } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
-import heroImage from "@/assets/hero-church.jpg";
-import communityImage from "@/assets/community-event.jpg";
+import heroImage from "@/assets/hero section.jpg";
+import communityImage from "@/assets/inside the church view 1.jpg";
+
+const slides = [
+  {
+    id: 1,
+    title: "Welcome to",
+    subtitle: "St. Mary Parish",
+    description: "A vibrant Catholic community in Trans-Ekulu, Enugu — united in faith, hope, and love.",
+    badge: "Catholic Diocese of Enugu",
+    image: heroImage
+  },
+  {
+    id: 2,
+    title: "Join Us in",
+    subtitle: "Weekly Celebration",
+    description: "Experience the joy of worship and fellowship in our Sunday Mass and community gatherings.",
+    badge: "Sunday Services",
+    image: communityImage
+  },
+  {
+    id: 3,
+    title: "Growing in",
+    subtitle: "Faith Together",
+    description: "Discover spiritual growth, service opportunities, and lasting friendships in our parish family.",
+    badge: "Community Life",
+    image: heroImage
+  }
+];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -21,11 +49,7 @@ const upcomingEvents = [
   { title: "Parish Bazaar", date: "April 18, 2026", time: "10:00 AM", category: "Community" },
 ];
 
-const projects = [
-  { name: "New Parish Hall", goal: 25000000, raised: 18500000, description: "Building a multipurpose hall for community gatherings" },
-  { name: "Scholarship Fund", goal: 5000000, raised: 3200000, description: "Supporting education for indigent parishioners" },
-  { name: "Church Renovation", goal: 15000000, raised: 12000000, description: "Restoring and beautifying our sacred space" },
-];
+const projects = [];
 
 const newsItems = [
   { title: "Bishop's Pastoral Visit Scheduled for May", date: "March 1, 2026", excerpt: "His Lordship will visit our parish for confirmation and pastoral assessment..." },
@@ -33,37 +57,85 @@ const newsItems = [
   { title: "Youth Choir Wins Diocesan Competition", date: "Feb 10, 2026", excerpt: "Our talented young musicians brought home the gold at the annual diocesan choir festival..." },
 ];
 
-const Index = () => (
+const Index = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const currentSlideData = slides[currentSlide];
+
+  return (
   <Layout>
-    {/* Hero */}
+    {/* Hero Slideshow */}
     <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-      <img src={heroImage} alt="St. Mary Parish Church" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0">
+        {slides.map((slide, index) => (
+          <img
+            key={slide.id}
+            src={slide.image}
+            alt={slide.subtitle}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+        ))}
+      </div>
       <div className="absolute inset-0 bg-gradient-hero" />
+      
+      {/* Slide Indicators */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentSlide 
+                ? 'bg-accent w-8' 
+                : 'bg-primary-foreground/50 hover:bg-primary-foreground/70'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+
       <div className="relative z-10 text-center px-4 max-w-4xl">
         <motion.span
+          key={currentSlideData.badge}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="inline-block font-heading text-xs tracking-[0.3em] uppercase text-accent mb-6"
         >
-          Catholic Diocese of Enugu
+          {currentSlideData.badge}
         </motion.span>
         <motion.h1
+          key={currentSlideData.title}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
           className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6 leading-tight"
         >
-          Welcome to
-          <span className="block text-gradient-gold">St. Mary Parish</span>
+          {currentSlideData.title}
+          <span className="block text-gradient-gold">{currentSlideData.subtitle}</span>
         </motion.h1>
         <motion.p
+          key={currentSlideData.description}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
           className="font-display text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto"
         >
-          A vibrant Catholic community in Trans-Ekulu, Enugu — united in faith, hope, and love.
+          {currentSlideData.description}
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -222,42 +294,8 @@ const Index = () => (
     <section className="py-24 bg-gradient-warm">
       <div className="container mx-auto px-4 lg:px-8">
         <SectionHeading subtitle="Building Together" title="Parish Projects" description="Support our ongoing projects and help us build a stronger community." />
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {projects.map((p, i) => {
-            const pct = Math.round((p.raised / p.goal) * 100);
-            return (
-              <motion.div
-                key={p.name}
-                custom={i}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                className="bg-background border border-border rounded-lg p-6 shadow-parish"
-              >
-                <h3 className="font-heading text-base font-semibold text-foreground mb-2">{p.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{p.description}</p>
-                <div className="w-full bg-muted rounded-full h-3 mb-3 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${pct}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, delay: 0.3 }}
-                    className="h-full rounded-full bg-accent"
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>₦{(p.raised / 1000000).toFixed(1)}M raised</span>
-                  <span>{pct}%</span>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-        <div className="text-center mt-10">
-          <Link to="/projects" className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity">
-            <Heart className="h-4 w-4" /> Support Our Projects
-          </Link>
+        <div className="text-center py-16">
+          <p className="text-2xl font-semibold text-muted-foreground">Will be updated soon</p>
         </div>
       </div>
     </section>
@@ -322,6 +360,7 @@ const Index = () => (
       </div>
     </section>
   </Layout>
-);
+  );
+};
 
 export default Index;

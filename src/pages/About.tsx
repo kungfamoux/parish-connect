@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
-import aboutImage from "@/assets/about-church.jpg";
+import aboutImage from "@/assets/blessed virgin mary.jpg";
 
 const leaders = [
   { name: "Rev. Fr. Chukwuemeka Obi", role: "Parish Priest", bio: "Ordained in 2005, Fr. Chukwuemeka has served our parish since 2018 with zeal and dedication." },

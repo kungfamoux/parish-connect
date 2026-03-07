@@ -3,20 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
-import heroImage from "@/assets/hero-church.jpg";
-import aboutImage from "@/assets/about-church.jpg";
-import communityImage from "@/assets/community-event.jpg";
+import heroImage from "@/assets/church building view.jpg";
+import aboutImage from "@/assets/inside the chapel.jpg";
+import communityImage from "@/assets/the parish hall.jpg";
 
 const photos = [
   { src: heroImage, alt: "Church exterior at sunset", category: "Parish Life" },
   { src: aboutImage, alt: "Church interior and altar", category: "Parish Life" },
   { src: communityImage, alt: "Community gathering", category: "Events" },
-  { src: heroImage, alt: "Sunday worship", category: "Parish Life" },
-  { src: communityImage, alt: "Parish bazaar", category: "Events" },
-  { src: aboutImage, alt: "Stained glass windows", category: "Historical" },
-  { src: communityImage, alt: "Youth fellowship", category: "Events" },
-  { src: heroImage, alt: "Palm Sunday procession", category: "Parish Life" },
-  { src: aboutImage, alt: "First Holy Communion", category: "Historical" },
 ];
 
 const categories = ["All", "Parish Life", "Events", "Historical"];
@@ -77,7 +71,12 @@ const Gallery = () => {
             onClick={() => setLightbox(null)}
             className="fixed inset-0 z-50 bg-foreground/90 flex items-center justify-center p-4"
           >
-            <button onClick={() => setLightbox(null)} className="absolute top-6 right-6 text-primary-foreground">
+            <button 
+              onClick={() => setLightbox(null)} 
+              className="absolute top-6 right-6 text-primary-foreground"
+              title="Close image view"
+              aria-label="Close image view"
+            >
               <X className="h-8 w-8" />
             </button>
             <img

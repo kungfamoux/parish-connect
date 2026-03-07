@@ -58,9 +58,9 @@ const Footer = () => (
         <div>
           <h4 className="font-heading text-sm font-semibold mb-4 text-accent">Mass Times</h4>
           <div className="flex flex-col gap-2 text-sm text-primary-foreground/70">
-            <p><span className="text-primary-foreground/90 font-medium">Sunday:</span> 6:00 AM, 8:00 AM, 10:00 AM</p>
-            <p><span className="text-primary-foreground/90 font-medium">Weekdays:</span> 6:30 AM, 5:30 PM</p>
-            <p><span className="text-primary-foreground/90 font-medium">Saturday:</span> 6:30 AM, 7:00 PM (Vigil)</p>
+            <p><span className="text-primary-foreground/90 font-medium">Sunday:</span> 6:00 AM, 8:00 AM, 10:00 AM, 6:00 PM</p>
+            <p><span className="text-primary-foreground/90 font-medium">Weekdays:</span> 6:00 AM, 6:00 PM</p>
+            <p><span className="text-primary-foreground/90 font-medium">Saturday:</span> 6:00 AM, 7:00 PM (Vigil)</p>
           </div>
           <div className="flex gap-3 mt-4">
             <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-accent/20 transition-colors">

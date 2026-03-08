@@ -6,12 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "About", path: "/about" },
+  { label: "Parish Priests", path: "/parish-priests" },
   { label: "Mass Schedule", path: "/mass-schedule" },
   { label: "Events", path: "/events" },
-  { label: "Projects", path: "/projects" },
   { label: "News", path: "/news" },
   { label: "Gallery", path: "/gallery" },
-  { label: "Contact", path: "/contact" },
 ];
 
 const Navbar = () => {

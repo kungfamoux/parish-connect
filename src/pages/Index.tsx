@@ -213,19 +213,35 @@ const Index = () => {
     </section>
 
     {/* Mass Schedule Snapshot */}
-    <section className="py-24 bg-gradient-burgundy">
-      <div className="container mx-auto px-4 lg:px-8">
+    <section className="py-24 bg-gradient-burgundy relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-parish-burgundy/90 via-parish-burgundy to-parish-burgundy/95" />
+      <div className="relative container mx-auto px-4 lg:px-8">
         <SectionHeading
           subtitle="Join Us in Worship"
           title="Mass & Sacrament Schedule"
           description="Come and encounter Christ in the Holy Eucharist. All are welcome."
           light
         />
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {[
-            { day: "Sunday", times: ["6:00 AM (Igbo)", "8:00 AM (English)", "10:00 AM (English)"], icon: "☀️" },
-            { day: "Weekdays", times: ["6:30 AM (Mon–Fri)", "5:30 PM (Mon–Fri)"], icon: "📿" },
-            { day: "Saturday", times: ["6:30 AM", "7:00 PM (Vigil Mass)"], icon: "🕯️" },
+            { 
+              day: "Sunday", 
+              times: ["6:00 AM (Igbo)", "8:00 AM (Igbo)", "10:00 AM (English/Latin)", "6:00 PM (English)"], 
+              icon: "☀️",
+              description: "4 Masses Available"
+            },
+            { 
+              day: "Weekdays", 
+              times: ["6:00 AM (Mon/Tue/Thu: Igbo)", "6:00 AM (Wed/Fri: English)", "6:00 PM (Mon/Tue/Thu: English)", "6:00 PM (Wed/Fri: Igbo)"], 
+              icon: "📿",
+              description: "Daily Mass"
+            },
+            { 
+              day: "Saturday", 
+              times: ["6:00 AM (Latin)", "7:00 PM (Vigil Mass)"], 
+              icon: "🕯️",
+              description: "Weekend Preparation"
+            },
           ].map((m, i) => (
             <motion.div
               key={m.day}
@@ -234,20 +250,45 @@ const Index = () => {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/15 rounded-lg p-6 text-center"
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 text-center shadow-2xl hover:shadow-white/10 transition-all duration-300 group"
             >
-              <span className="text-3xl mb-3 block">{m.icon}</span>
-              <h3 className="font-heading text-lg font-semibold text-primary-foreground mb-3">{m.day}</h3>
-              {m.times.map((t) => (
-                <p key={t} className="text-sm text-primary-foreground/70 mb-1">{t}</p>
-              ))}
+              <div className="bg-white/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 group-hover:bg-white/30 transition-colors">
+                <span className="text-4xl filter drop-shadow-lg">{m.icon}</span>
+              </div>
+              <h3 className="font-heading text-xl font-bold text-primary-foreground mb-2">{m.day}</h3>
+              <p className="text-accent text-sm font-medium mb-4">{m.description}</p>
+              <div className="space-y-2">
+                {m.times.map((t, index) => (
+                  <motion.p 
+                    key={t}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 + index * 0.05 }}
+                    className="text-sm text-primary-foreground/90 leading-relaxed"
+                  >
+                    {t}
+                  </motion.p>
+                ))}
+              </div>
             </motion.div>
           ))}
         </div>
-        <div className="text-center mt-10">
-          <Link to="/mass-schedule" className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:text-primary-foreground transition-colors">
-            View Full Schedule <ArrowRight className="h-4 w-4" />
-          </Link>
+        <div className="text-center mt-12">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            <Link 
+              to="/mass-schedule" 
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-accent text-accent-foreground font-semibold text-sm hover:bg-accent/80 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-accent/25 hover:shadow-accent/40"
+            >
+              View Full Schedule <ArrowRight className="h-4 w-4" />
+            </Link>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -295,7 +336,27 @@ const Index = () => {
       <div className="container mx-auto px-4 lg:px-8">
         <SectionHeading subtitle="Building Together" title="Parish Projects" description="Support our ongoing projects and help us build a stronger community." />
         <div className="text-center py-16">
-          <p className="text-2xl font-semibold text-muted-foreground">Will be updated soon</p>
+          <div className="bg-white/60 backdrop-blur-sm border border-parish-burgundy/20 rounded-lg p-12 max-w-2xl mx-auto">
+            <div className="w-16 h-16 bg-parish-burgundy/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-2xl">🏗️</span>
+            </div>
+            <h3 className="font-heading text-2xl font-bold text-foreground mb-4">Coming Soon</h3>
+            <p className="text-muted-foreground font-display mb-8">
+              Our parish projects are currently being planned and developed. Check back soon for information about our building initiatives, community programs, and ways you can get involved.
+            </p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <Link 
+                to="/projects" 
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-parish-burgundy text-white font-semibold text-sm hover:bg-parish-burgundy/80 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-parish-burgundy/25"
+              >
+                View Projects <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </div>
     </section>

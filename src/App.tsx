@@ -11,6 +11,7 @@ import Projects from "./pages/Projects";
 import News from "./pages/News";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
+import ParishPriests from "./pages/ParishPriests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
+          <Route path="/parish-priests" element={<ParishPriests />} />
           <Route path="/mass-schedule" element={<MassSchedule />} />
           <Route path="/events" element={<Events />} />
           <Route path="/projects" element={<Projects />} />

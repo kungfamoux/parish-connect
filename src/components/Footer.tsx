@@ -63,10 +63,10 @@ const Footer = () => (
             <p><span className="text-primary-foreground/90 font-medium">Saturday:</span> 6:00 AM, 7:00 PM (Vigil)</p>
           </div>
           <div className="flex gap-3 mt-4">
-            <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-accent/20 transition-colors">
+            <a href="#" title="Facebook" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-accent/20 transition-colors">
               <Facebook className="h-4 w-4" />
             </a>
-            <a href="#" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-accent/20 transition-colors">
+            <a href="#" title="Instagram" className="p-2 rounded-full bg-primary-foreground/10 hover:bg-accent/20 transition-colors">
               <Instagram className="h-4 w-4" />
             </a>
           </div>

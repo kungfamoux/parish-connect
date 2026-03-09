@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Calendar, Clock, Heart, ArrowRight, BookOpen, Users, Church } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
-import heroImage from "@/assets/hero section.jpg";
+import heroImage from "@/assets/hero section.png";
 import communityImage from "@/assets/inside the church view 1.jpg";
 
 const slides = [
@@ -190,6 +190,11 @@ const Index = () => {
                   <p className="text-xs text-muted-foreground">{s.sub}</p>
                 </div>
               ))}
+            </div>
+            <div className="bg-gradient-to-r from-parish-burgundy/20 to-parish-burgundy/10 border border-parish-burgundy/30 rounded-lg p-6 text-center">
+              <Calendar className="h-8 w-8 text-parish-burgundy mx-auto mb-3" />
+              <h3 className="font-heading text-xl font-bold text-foreground mb-2">Sunday Mass</h3>
+              <p className="text-lg text-muted-foreground font-display">6, 8 & 10 AM</p>
             </div>
             <Link to="/about" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-accent transition-colors">
               Read Our Story <ArrowRight className="h-4 w-4" />

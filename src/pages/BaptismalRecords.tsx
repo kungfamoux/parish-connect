@@ -13,53 +13,34 @@ export default function BaptismalRecords() {
 
   const recordsPerPage = 20;
 
-  // Anti-screenshot protection - TEMPORARILY DISABLED
-  // useEffect(() => {
-  //   // Disable right-click
-  //   const handleContextMenu = (e: MouseEvent) => {
-  //     e.preventDefault();
-  //   };
-  //   document.addEventListener('contextmenu', handleContextMenu);
-    
-  //   // Disable print
-  //   const handleBeforePrint = (e: Event) => {
-  //     e.preventDefault();
-  //   };
-  //   window.addEventListener('beforeprint', handleBeforePrint);
-    
-  //   // Disable screenshots
-  //   const handleKeyDown = (e: KeyboardEvent) => {
-  //     if (e.key === 'PrintScreen' || (e.ctrlKey && e.shiftKey && e.key === 'S')) {
-  //       e.preventDefault();
-  //     }
-  //   };
-  //   document.addEventListener('keydown', handleKeyDown);
-    
-  //   // Add watermark overlay
-  //   const watermark = document.createElement('div');
-  //   watermark.innerHTML = '';
-  //   watermark.style.cssText = `
-  //     position: fixed;
-  //     top: 0;
-  //     left: 0;
-  //     width: 100%;
-  //     height: 100%;
-  //     background: rgba(0,0,0,0.1);
-  //     z-index: 9999;
-  //     pointer-events: none;
-  //     user-select: none;
-  //   `;
-  //   document.body.appendChild(watermark);
-    
-  //   return () => {
-  //     document.removeEventListener('contextmenu', handleContextMenu);
-  //     window.removeEventListener('beforeprint', handleBeforePrint);
-  //     document.removeEventListener('keydown', handleKeyDown);
-  //     if (document.body.contains(watermark)) {
-  //       document.body.removeChild(watermark);
-  //     }
-  //   };
-  // }, []);
+  // Anti-screenshot protection
+  useEffect(() => {
+    // Disable right-click
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    // Disable print
+    const handleBeforePrint = (e: Event) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeprint', handleBeforePrint);
+
+    // Disable screenshots
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'PrintScreen' || (e.ctrlKey && e.shiftKey && e.key === 'S')) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   useEffect(() => {
     fetchRecords();

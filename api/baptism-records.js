@@ -1,14 +1,9 @@
-// API with real database connection using dynamic Prisma import
+// API with real database connection - Prisma client generation fix
 export default async (req, res) => {
-  // Strict security headers for confidential data
-  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || 'null');
+  // Set CORS headers first
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -19,22 +14,6 @@ export default async (req, res) => {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
-
-  // Rate limiting and access validation
-  const clientIP = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection.remoteAddress;
-  const userAgent = req.headers['user-agent'] || '';
-  
-  // Basic security checks
-  if (!clientIP) {
-    return res.status(403).json({ error: 'Access denied - IP required' });
-  }
-
-  // Rate limiting (simple implementation)
-  const now = Date.now();
-  const rateLimitKey = `rate_limit_${clientIP}`;
-  
-  // Log access attempt for audit
-  console.log(`ACCESS ATTEMPT: ${clientIP} - ${userAgent} - ${new Date().toISOString()}`);
 
   try {
     console.log('=== API Request ===');
@@ -59,33 +38,12 @@ export default async (req, res) => {
     
     const { page = 1, limit = 20, search = '' } = req.query;
     const parsedPage = parseInt(page) || 1;
-    const parsedLimit = Math.min(parseInt(limit) || 20, 20); // Reduced limit for security
+    const parsedLimit = Math.min(parseInt(limit) || 20, 100);
     const skip = (parsedPage - 1) * parsedLimit;
 
     console.log('Parsed params:', { page: parsedPage, limit: parsedLimit, search });
 
-    // Search restrictions for security
-    if (search && search.trim()) {
-      const searchTerm = search.trim();
-      
-      // Prevent empty or too short searches (data scraping protection)
-      if (searchTerm.length < 2) {
-        return res.status(400).json({ 
-          error: 'Search term must be at least 2 characters long',
-          message: 'For security reasons, please enter at least 2 characters to search'
-        });
-      }
-      
-      // Prevent very broad searches that could expose too much data
-      if (searchTerm.length < 3 && parsedLimit > 10) {
-        return res.status(400).json({ 
-          error: 'Search too broad',
-          message: 'Please enter more specific search terms'
-        });
-      }
-    }
-
-    // Build search conditions with restrictions
+    // Build search conditions
     let where = {};
     if (search && search.trim()) {
       const searchTerm = search.trim();
@@ -122,51 +80,15 @@ export default async (req, res) => {
     });
     console.log('Records found:', records.length);
 
-    // Data masking for sensitive information
-    const maskedRecords = records.map(record => ({
-      ...record,
-      // Mask sensitive personal information (partial masking)
-      dateOfBirth: record.dateOfBirth ? new Date(record.dateOfBirth).getFullYear() + '-XX-XX' : null,
-      // Keep full baptism information but limit exposure
-      baptismName: record.baptismName,
-      surname: record.surname,
-      otherName: record.otherName,
-      sNo: record.sNo,
-      dateOfBaptism: record.dateOfBaptism,
-      placeOfBaptism: record.placeOfBaptism,
-      // Mask parents' names partially for privacy
-      fathersName: record.fathersName ? record.fathersName.substring(0, Math.max(3, record.fathersName.length / 2)) + '***' : null,
-      mothersName: record.mothersName ? record.mothersName.substring(0, Math.max(3, record.mothersName.length / 2)) + '***' : null,
-      // Keep ceremonial information
-      solemnOrPrivate: record.solemnOrPrivate,
-      nameOfMinister: record.nameOfMinister,
-      // Mask godparents' names for privacy
-      nameOfGodParents: record.nameOfGodParents ? '***CONFIDENTIAL***' : null,
-      // Keep other sacramental dates but mask personal details
-      firstHolyCommunionDate: record.firstHolyCommunionDate,
-      firstHolyCommunionPlace: record.firstHolyCommunionPlace,
-      confirmationDate: record.confirmationDate,
-      confirmationPlace: record.confirmationPlace,
-      // Mask marriage information for privacy
-      marriageDate: null,
-      marriagePartnerName: '***CONFIDENTIAL***',
-      marriagePlace: null,
-      marriageWitnesses: '***CONFIDENTIAL***',
-      marriageMinister: null,
-      dateOfDeath: record.dateOfDeath ? '***CONFIDENTIAL***' : null,
-      remarks: record.remarks ? '***CONFIDENTIAL***' : null,
-    }));
-
     const response = {
-      records: maskedRecords,
+      records,
       total,
       page: parsedPage,
       limit: parsedLimit,
       totalPages: Math.ceil(total / parsedLimit),
-      securityNotice: 'This is confidential parish data. Access is logged and monitored.',
     };
 
-    console.log('Sending masked response for security');
+    console.log('Sending response:', JSON.stringify(response));
     res.status(200).json(response);
 
   } catch (error) {

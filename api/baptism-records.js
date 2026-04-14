@@ -32,6 +32,7 @@ export default async (req, res) => {
     // Generate Prisma client on-demand
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient({
+      accelerateUrl: process.env.DATABASE_URL,
       log: ['info', 'warn', 'error'],
     });
     

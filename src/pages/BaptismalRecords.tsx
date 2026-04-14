@@ -287,10 +287,10 @@ export default function BaptismalRecords() {
             </div>
           )}
 
-        {/* Enhanced Pagination */}
+        {/* Enhanced Pagination - Mobile Friendly */}
         {totalPages > 1 && (
           <div className="mt-8 flex items-center justify-between bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-700">
+            <div className="hidden sm:block text-sm text-gray-700">
               Page <span className="font-semibold text-blue-600">{currentPage}</span> of{' '}
               <span className="font-semibold text-gray-900">{totalPages}</span>
             </div>
@@ -298,33 +298,18 @@ export default function BaptismalRecords() {
               <button
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
+                className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200 text-sm"
               >
-                <span>←</span>
-                <span className="font-medium">Previous</span>
+                <span>×</span>
+                <span className="font-medium hidden sm:inline">Previous</span>
               </button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-10 h-10 rounded-lg font-medium transition-all duration-200 ${
-                      currentPage === page
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                        : 'border border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
               <button
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200"
+                className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200 text-sm"
               >
-                <span className="font-medium">Next</span>
-                <span>→</span>
+                <span className="font-medium hidden sm:inline">Next</span>
+                <span>{'>'}</span>
               </button>
             </div>
           </div>

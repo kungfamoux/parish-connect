@@ -47,22 +47,28 @@ export default async (req, res) => {
     let where = {};
     if (search && search.trim()) {
       const searchTerm = search.trim();
-      where = {
-        OR: [
-          { baptismName: { contains: searchTerm, mode: 'insensitive' } },
-          { surname: { contains: searchTerm, mode: 'insensitive' } },
-          { otherName: { contains: searchTerm, mode: 'insensitive' } },
-          { fathersName: { contains: searchTerm, mode: 'insensitive' } },
-          { mothersName: { contains: searchTerm, mode: 'insensitive' } },
-        ],
-      };
       
-      // Try to add serial number search if it's a number
-      if (!isNaN(searchTerm)) {
-        where.OR.push({ sNo: parseInt(searchTerm) });
+      // Only search if term is reasonable (not too short or just special characters)
+      if (searchTerm.length >= 2 && /^[a-zA-Z0-9\s]+$/.test(searchTerm)) {
+        where = {
+          OR: [
+            { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+            { surname: { contains: searchTerm, mode: 'insensitive' } },
+            { otherName: { contains: searchTerm, mode: 'insensitive' } },
+            { fathersName: { contains: searchTerm, mode: 'insensitive' } },
+            { mothersName: { contains: searchTerm, mode: 'insensitive' } },
+          ],
+        };
+        
+        // Try to add serial number search if it's a pure number
+        if (/^\d+$/.test(searchTerm)) {
+          where.OR.push({ sNo: parseInt(searchTerm) });
+        }
+        
+        console.log('Search where clause:', JSON.stringify(where));
+      } else {
+        console.log('Search term too short or contains invalid characters:', searchTerm);
       }
-      
-      console.log('Search where clause:', JSON.stringify(where));
     }
 
     // Test database connection first

@@ -49,7 +49,6 @@ export default async (req, res) => {
       const searchTerm = search.trim();
       where = {
         OR: [
-          { sNo: { contains: searchTerm, mode: 'insensitive' } },
           { baptismName: { contains: searchTerm, mode: 'insensitive' } },
           { surname: { contains: searchTerm, mode: 'insensitive' } },
           { otherName: { contains: searchTerm, mode: 'insensitive' } },

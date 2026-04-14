@@ -19,15 +19,9 @@ module.exports = async (req, res) => {
   let prisma;
   
   try {
-    // Initialize Prisma client
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    });
-
+    // Initialize Prisma client with direct URL
+    prisma = new PrismaClient();
+    
     const { page = 1, limit = 20, search = '' } = req.query;
 
     const parsedPage = parseInt(page) || 1;
@@ -44,6 +38,10 @@ module.exports = async (req, res) => {
       ],
     } : {};
 
+    console.log('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Missing');
+    console.log('Search term:', search);
+    console.log('Where clause:', JSON.stringify(where));
+
     // Get total count
     const total = await prisma.baptismRecord.count({ where });
 
@@ -55,6 +53,9 @@ module.exports = async (req, res) => {
       orderBy: { sNo: 'asc' },
     });
 
+    console.log('Found records:', records.length);
+    console.log('Total count:', total);
+
     res.status(200).json({
       records,
       total,
@@ -65,6 +66,7 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('API Error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Internal server error',
       message: error.message 

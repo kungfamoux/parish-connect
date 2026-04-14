@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model BaptismRecord {
+  id                        Int       @id @default(autoincrement())
+  sNo                       Int?      @map("S_NO") @unique
+  dateOfBaptism             DateTime? @map("DATE_OF_BAPTISM")
+  baptismName               String?   @map("BAPTISM_NAME")
+  otherName                 String?   @map("OTHER_NAME_S")
+  surname                   String?   @map("SURNAME")
+  dateOfBirth               DateTime? @map("DATE_OF_BIRTH")
+  placeOfBaptism            String?   @map("PLACE_OF_BAPTISM")
+  homeTown                  String?   @map("HOME_TOWN")
+  fathersName               String?   @map("FATHERS_NAME")
+  mothersName               String?   @map("MOTHERS_NAME")
+  solemnOrPrivate           String?   @map("SOLEMN_OR_PRIVATE")
+  nameOfGodParents          String?   @map("NAME_OF_GOD_PARENTS")
+  nameOfMinister            String?   @map("NAME_OF_MINISTER")
+  firstHolyCommunionDate    DateTime? @map("FIRST_HOLY_COMMUNION_DATE")
+  firstHolyCommunionPlace   String?   @map("FIRST_HOLY_COMMUNION_PLACE")
+  firstHolyCommunionMinister String?  @map("FIRST_HOLY_COMMUNION_MINISTER")
+  confirmationDate          DateTime? @map("CONFIRMATION_DATE")
+  confirmationPlace         String?   @map("CONFIRMATION_PLACE")
+  confirmationMinister      String?   @map("CONFIRMATION_MINISTER")
+  marriageDate              DateTime? @map("MARRIAGE_DATE")
+  marriagePartnerName       String?   @map("NAME_OF_PARTNER")
+  marriagePlace             String?   @map("MARRIAGE_PLACE")
+  marriageWitnesses         String?   @map("WITNESS_S")
+  marriageMinister          String?   @map("MARRIAGE_MINISTER")
+  dateOfDeath               DateTime? @map("DATE_OF_DEATH")
+  remarks                   String?   @map("REMARKS")
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  @@map("baptism_records")
+  @@index([sNo])
+  @@index([baptismName])
+  @@index([surname])
+  @@index([dateOfBaptism])
+}

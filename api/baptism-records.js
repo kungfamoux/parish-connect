@@ -56,6 +56,12 @@ export default async (req, res) => {
           { mothersName: { contains: searchTerm, mode: 'insensitive' } },
         ],
       };
+      
+      // Try to add serial number search if it's a number
+      if (!isNaN(searchTerm)) {
+        where.OR.push({ sNo: parseInt(searchTerm) });
+      }
+      
       console.log('Search where clause:', JSON.stringify(where));
     }
 

@@ -97,55 +97,47 @@ export default function BaptismalRecords() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8">
-            <div>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Baptismal Records
-                </h1>
-                <p className="mt-2 text-lg text-gray-600 flex items-center gap-2">
-                  <Church className="h-5 w-5 text-blue-600" />
-                  St. Mary Parish Trans Ekulu Enugu
-                </p>
-              </div>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Header */}
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+            Baptismal Records
+          </h1>
+          <p className="text-gray-600 text-base lg:text-lg">
+            Search and manage parish baptismal records
+          </p>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search and Filters */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search by name, surname, or serial number..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200"
-                />
-              </div>
-            </div>
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-4 lg:p-6 mb-6">
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by name, serial number, or parents..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            />
+          </div>
+          <div className="flex gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg"
+              className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200"
             >
-              <Filter className="h-5 w-5" />
+              <Filter className="w-4 h-4" />
               <span className="font-medium">Filters</span>
             </button>
           </div>
+        </div>
 
-          {showFilters && (
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl">
+        {showFilters && (
+          <div className="border-t pt-4 mt-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <input
                 type="date"
                 placeholder="Date from"
@@ -164,12 +156,12 @@ export default function BaptismalRecords() {
                 <option value="SOLEMN">Solemn</option>
                 <option value="PRIVATE">Private</option>
               </select>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Error Message */}
-        {error && (
+          {/* Error Message */}
+          {error && (
           <div className="bg-red-50 border-2 border-red-200 text-red-700 px-6 py-4 rounded-xl mb-6">
             <div className="flex items-center gap-2">
               <span className="text-red-600">⚠️</span>
@@ -193,7 +185,8 @@ export default function BaptismalRecords() {
 
         {/* Records Table */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
@@ -270,6 +263,61 @@ export default function BaptismalRecords() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card Layout */}
+          <div className="lg:hidden">
+            <div className="divide-y divide-gray-200">
+              {records.map((record) => (
+                <div key={record.id} className="p-4 hover:bg-gray-50 transition-colors duration-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                          {record.sNo || 'N/A'}
+                        </span>
+                        <h3 className="font-semibold text-gray-900 text-sm">
+                          {record.baptismName || 'N/A'}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {record.otherName && `${record.otherName} `}{record.surname || ''}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedRecord(record)}
+                      className="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                      title="View record details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3 h-3 text-gray-400" />
+                      <span className="text-gray-500">Baptized:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(record.dateOfBaptism)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3 h-3 text-gray-400" />
+                      <span className="text-gray-500">Born:</span>
+                      <span className="text-gray-900 font-medium">{formatDate(record.dateOfBirth)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3 h-3 text-gray-400" />
+                      <span className="text-gray-500">Place:</span>
+                      <span className="text-gray-900 font-medium">{record.placeOfBaptism || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <User className="w-3 h-3 text-gray-400" />
+                      <span className="text-gray-500">Minister:</span>
+                      <span className="text-gray-900 font-medium">{record.nameOfMinister || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {records.length === 0 && !loading && (
@@ -506,6 +554,8 @@ export default function BaptismalRecords() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

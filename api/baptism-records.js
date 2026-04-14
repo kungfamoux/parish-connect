@@ -14,6 +14,10 @@ export default async (req, res) => {
     return;
   }
 
+  // Initialize Prisma client dynamically
+  const { PrismaClient } = await import('@prisma/client');
+  const prisma = new PrismaClient();
+  
   try {
     console.log('=== API Request ===');
     console.log('Method:', req.method);
@@ -28,10 +32,6 @@ export default async (req, res) => {
       });
     }
 
-    // Initialize Prisma client dynamically
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    
     const { page = 1, limit = 20, search = '' } = req.query;
     const parsedPage = parseInt(page) || 1;
     const parsedLimit = Math.min(parseInt(limit) || 20, 100);

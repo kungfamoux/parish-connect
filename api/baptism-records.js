@@ -126,7 +126,7 @@ export default async (req, res) => {
     const maskedRecords = records.map(record => ({
       ...record,
       // Mask sensitive personal information (partial masking)
-      dateOfBirth: record.dateOfBirth ? record.dateOfBirth.substring(0, 4) + '-XX-XX' : null,
+      dateOfBirth: record.dateOfBirth ? new Date(record.dateOfBirth).getFullYear() + '-XX-XX' : null,
       // Keep full baptism information but limit exposure
       baptismName: record.baptismName,
       surname: record.surname,

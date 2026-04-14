@@ -75,7 +75,7 @@ export default function BaptismalRecords() {
         search: searchTerm
       });
       
-      const response = await fetch(`/api/baptism-records-simple?${params.toString()}`);
+      const response = await fetch(`/api/baptism-records?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch records');

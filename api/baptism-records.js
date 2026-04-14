@@ -26,6 +26,13 @@ export default async (req, res) => {
     console.log('Database URL exists:', !!process.env.DATABASE_URL);
 
     // Initialize Prisma client
+    if (!process.env.DATABASE_URL) {
+      return res.status(500).json({
+        error: 'Database configuration error',
+        message: 'DATABASE_URL environment variable is not set in Vercel'
+      });
+    }
+    
     prisma = new PrismaClient();
     
     const { page = 1, limit = 20, search = '' } = req.query;

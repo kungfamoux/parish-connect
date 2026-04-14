@@ -1,6 +1,4 @@
-// API with real database connection using Prisma
-const { PrismaClient } = require('@prisma/client');
-
+// API with real database connection using dynamic Prisma import
 export default async (req, res) => {
   // Set CORS headers first
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,7 +31,8 @@ export default async (req, res) => {
       });
     }
 
-    // Initialize Prisma client
+    // Initialize Prisma client dynamically
+    const { PrismaClient } = await import('@prisma/client');
     prisma = new PrismaClient();
     
     const { page = 1, limit = 20, search = '' } = req.query;

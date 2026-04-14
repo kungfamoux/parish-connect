@@ -1,16 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
-const { withAccelerate } = require('@prisma/extension-accelerate');
-
-// Prisma client
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-});
 
 module.exports = async (req, res) => {
-  // Enable CORS
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -22,11 +16,22 @@ module.exports = async (req, res) => {
     return;
   }
 
+  let prisma;
+  
   try {
+    // Initialize Prisma client
+    prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+    });
+
     const { page = 1, limit = 20, search = '' } = req.query;
 
-    const parsedPage = parseInt(page);
-    const parsedLimit = Math.min(parseInt(limit), 100); // Max 100 records
+    const parsedPage = parseInt(page) || 1;
+    const parsedLimit = Math.min(parseInt(limit) || 20, 100);
     const skip = (parsedPage - 1) * parsedLimit;
 
     // Build search conditions
@@ -65,6 +70,8 @@ module.exports = async (req, res) => {
       message: error.message 
     });
   } finally {
-    await prisma.$disconnect();
+    if (prisma) {
+      await prisma.$disconnect();
+    }
   }
 };

@@ -1,4 +1,6 @@
-// Simple API without Prisma for now
+// API with real database connection using Prisma
+const { PrismaClient } = require('@prisma/client');
+
 export default async (req, res) => {
   // Set CORS headers first
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,6 +17,8 @@ export default async (req, res) => {
     return;
   }
 
+  let prisma;
+  
   try {
     console.log('=== API Request ===');
     console.log('Method:', req.method);
@@ -25,73 +29,62 @@ export default async (req, res) => {
     if (!process.env.DATABASE_URL) {
       return res.status(500).json({
         error: 'Database configuration error',
-        message: 'DATABASE_URL environment variable is not set in Vercel. Please add it in Vercel dashboard.'
+        message: 'DATABASE_URL environment variable is not set in Vercel'
       });
     }
 
-    // Return mock data for now since DATABASE_URL is not set
-    const mockRecords = [
-      {
-        id: 1,
-        sNo: "001",
-        baptismName: "John",
-        surname: "Doe",
-        dateOfBaptism: "2023-01-15T00:00:00.000Z",
-        placeOfBaptism: "St. Mary Parish",
-        fathersName: "John Doe Sr.",
-        mothersName: "Jane Doe"
-      },
-      {
-        id: 2,
-        sNo: "002", 
-        baptismName: "Jane",
-        surname: "Smith",
-        dateOfBaptism: "2023-02-20T00:00:00.000Z",
-        placeOfBaptism: "St. Mary Parish",
-        fathersName: "Robert Smith",
-        mothersName: "Mary Smith"
-      },
-      {
-        id: 3,
-        sNo: "003",
-        baptismName: "Michael",
-        surname: "Johnson",
-        dateOfBaptism: "2023-03-10T00:00:00.000Z",
-        placeOfBaptism: "St. Mary Parish",
-        fathersName: "David Johnson",
-        mothersName: "Sarah Johnson"
-      }
-    ];
-
+    // Initialize Prisma client
+    prisma = new PrismaClient();
+    
     const { page = 1, limit = 20, search = '' } = req.query;
     const parsedPage = parseInt(page) || 1;
     const parsedLimit = Math.min(parseInt(limit) || 20, 100);
+    const skip = (parsedPage - 1) * parsedLimit;
 
     console.log('Parsed params:', { page: parsedPage, limit: parsedLimit, search });
 
-    // Filter mock data based on search
-    let filteredRecords = mockRecords;
+    // Build search conditions
+    let where = {};
     if (search && search.trim()) {
-      const searchTerm = search.trim().toLowerCase();
-      filteredRecords = mockRecords.filter(record => 
-        record.baptismName?.toLowerCase().includes(searchTerm) ||
-        record.surname?.toLowerCase().includes(searchTerm) ||
-        record.fathersName?.toLowerCase().includes(searchTerm) ||
-        record.mothersName?.toLowerCase().includes(searchTerm)
-      );
+      const searchTerm = search.trim();
+      where = {
+        OR: [
+          { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+          { surname: { contains: searchTerm, mode: 'insensitive' } },
+          { otherName: { contains: searchTerm, mode: 'insensitive' } },
+          { fathersName: { contains: searchTerm, mode: 'insensitive' } },
+          { mothersName: { contains: searchTerm, mode: 'insensitive' } },
+        ],
+      };
+      console.log('Search where clause:', JSON.stringify(where));
     }
 
-    // Apply pagination
-    const startIndex = (parsedPage - 1) * parsedLimit;
-    const endIndex = startIndex + parsedLimit;
-    const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
+    // Test database connection first
+    console.log('Testing database connection...');
+    await prisma.$connect();
+    console.log('Database connected successfully');
+
+    // Get total count
+    console.log('Executing count query...');
+    const total = await prisma.baptismRecord.count({ where });
+    console.log('Count result:', total);
+
+    // Get records with pagination
+    console.log('Executing findMany query...');
+    const records = await prisma.baptismRecord.findMany({
+      where,
+      skip,
+      take: parsedLimit,
+      orderBy: { sNo: 'asc' },
+    });
+    console.log('Records found:', records.length);
 
     const response = {
-      records: paginatedRecords,
-      total: filteredRecords.length,
+      records,
+      total,
       page: parsedPage,
       limit: parsedLimit,
-      totalPages: Math.ceil(filteredRecords.length / parsedLimit),
+      totalPages: Math.ceil(total / parsedLimit),
     };
 
     console.log('Sending response:', JSON.stringify(response));
@@ -101,11 +94,22 @@ export default async (req, res) => {
     console.error('=== API ERROR ===');
     console.error('Error type:', error.constructor.name);
     console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Full error:', error);
     
     res.status(500).json({ 
       error: 'Internal server error',
       message: error.message,
       type: error.constructor.name
     });
+  } finally {
+    if (prisma) {
+      try {
+        await prisma.$disconnect();
+        console.log('Database disconnected');
+      } catch (disconnectError) {
+        console.error('Disconnect error:', disconnectError);
+      }
+    }
   }
 };

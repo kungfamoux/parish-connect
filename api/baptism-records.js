@@ -31,7 +31,9 @@ export default async (req, res) => {
 
     // Generate Prisma client on-demand
     const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
+    const prisma = new PrismaClient({
+      log: ['info', 'warn', 'error'],
+    });
     
     const { page = 1, limit = 20, search = '' } = req.query;
     const parsedPage = parseInt(page) || 1;

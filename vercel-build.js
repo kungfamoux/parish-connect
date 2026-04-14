@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Vercel build script to generate Prisma client
-const { execSync } = require('child_process');
+import { execSync } from 'child_process';
 
 console.log('Starting Vercel build process...');
 

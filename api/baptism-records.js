@@ -28,15 +28,17 @@ module.exports = async (req, res) => {
     const parsedLimit = Math.min(parseInt(limit) || 20, 100);
     const skip = (parsedPage - 1) * parsedLimit;
 
-    // Build search conditions
-    const where = search ? {
-      OR: [
-        { baptismName: { contains: search, mode: 'insensitive' } },
-        { surname: { contains: search, mode: 'insensitive' } },
-        { otherName: { contains: search, mode: 'insensitive' } },
-        { sNo: { contains: search, mode: 'insensitive' } },
-      ],
-    } : {};
+    // Build search conditions - simplified to avoid crashes
+    let where = {};
+    if (search && search.trim()) {
+      where = {
+        OR: [
+          { baptismName: { contains: search.trim(), mode: 'insensitive' } },
+          { surname: { contains: search.trim(), mode: 'insensitive' } },
+          { otherName: { contains: search.trim(), mode: 'insensitive' } },
+        ],
+      };
+    }
 
     console.log('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Missing');
     console.log('Search term:', search);

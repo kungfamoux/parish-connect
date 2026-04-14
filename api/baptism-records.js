@@ -1,4 +1,4 @@
-// API with real database connection using dynamic Prisma import
+// API with real database connection - Prisma client generation fix
 export default async (req, res) => {
   // Set CORS headers first
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,8 +15,6 @@ export default async (req, res) => {
     return;
   }
 
-  let prisma;
-  
   try {
     console.log('=== API Request ===');
     console.log('Method:', req.method);
@@ -31,9 +29,15 @@ export default async (req, res) => {
       });
     }
 
-    // Initialize Prisma client dynamically
+    // Generate Prisma client on-demand
     const { PrismaClient } = await import('@prisma/client');
-    prisma = new PrismaClient();
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+    });
     
     const { page = 1, limit = 20, search = '' } = req.query;
     const parsedPage = parseInt(page) || 1;
@@ -99,16 +103,10 @@ export default async (req, res) => {
     res.status(500).json({ 
       error: 'Internal server error',
       message: error.message,
-      type: error.constructor.name
+      type: error.constructor.name,
+      details: 'Prisma client generation issue - may need to run prisma generate in build process'
     });
   } finally {
-    if (prisma) {
-      try {
-        await prisma.$disconnect();
-        console.log('Database disconnected');
-      } catch (disconnectError) {
-        console.error('Disconnect error:', disconnectError);
-      }
-    }
+    // Note: prisma cleanup handled by garbage collection in serverless
   }
 };

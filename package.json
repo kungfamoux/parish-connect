@@ -26,7 +26,9 @@
 
     "test:watch": "vitest",
 
-    "import:baptism": "tsx scripts/import-baptism-data.ts"
+    "import:baptism": "tsx scripts/import-baptism-data.ts",
+
+    "vercel-build": "node vercel-build.js"
 
   },
 

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+let prisma;
 
 export default async (req, res) => {
   // Set CORS headers
@@ -14,6 +14,94 @@ export default async (req, res) => {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
+  }
+
+  let prismaClient;
+  
+  try {
+    // Log request details
+    console.log('=== API Request ===');
+    console.log('Method:', req.method);
+    console.log('Query:', req.query);
+    console.log('Database URL exists:', !!process.env.DATABASE_URL);
+
+    // Initialize Prisma client dynamically
+    const { PrismaClient } = await import('@prisma/client');
+    prismaClient = new PrismaClient();
+    
+    const { page = 1, limit = 20, search = '' } = req.query;
+    const parsedPage = parseInt(page) || 1;
+    const parsedLimit = Math.min(parseInt(limit) || 20, 100);
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    console.log('Parsed params:', { page: parsedPage, limit: parsedLimit, search });
+
+    // Simple query without search first
+    let where = {};
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      where = {
+        OR: [
+          { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+          { surname: { contains: searchTerm, mode: 'insensitive' } },
+          { otherName: { contains: searchTerm, mode: 'insensitive' } },
+        ],
+      };
+      console.log('Search where clause:', JSON.stringify(where));
+    }
+
+    // Test database connection first
+    console.log('Testing database connection...');
+    await prismaClient.$connect();
+    console.log('Database connected successfully');
+
+    // Simple count query
+    console.log('Executing count query...');
+    const total = await prismaClient.baptismRecord.count({ where });
+    console.log('Count result:', total);
+
+    // Simple records query
+    console.log('Executing findMany query...');
+    const records = await prismaClient.baptismRecord.findMany({
+      where,
+      skip,
+      take: parsedLimit,
+      orderBy: { sNo: 'asc' },
+    });
+    console.log('Records found:', records.length);
+
+    const response = {
+      records,
+      total,
+      page: parsedPage,
+      limit: parsedLimit,
+      totalPages: Math.ceil(total / parsedLimit),
+    };
+
+    console.log('Sending response:', JSON.stringify(response));
+    res.status(200).json(response);
+
+  } catch (error) {
+    console.error('=== API ERROR ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Full error:', error);
+    
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      type: error.constructor.name
+    });
+  } finally {
+    if (prismaClient) {
+      try {
+        await prismaClient.$disconnect();
+        console.log('Database disconnected');
+      } catch (disconnectError) {
+        console.error('Disconnect error:', disconnectError);
+      }
+    }
   }
 
   let prisma;

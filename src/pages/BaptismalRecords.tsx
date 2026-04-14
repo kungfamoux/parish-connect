@@ -186,29 +186,29 @@ export default function BaptismalRecords() {
         {/* Records Table */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
           {/* Desktop Table */}
-          <div className="hidden lg:block overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     S/No
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Name
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Date of Baptism
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Date of Birth
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Place of Baptism
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Minister
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <th className="px-3 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Actions
                   </th>
                 </tr>
@@ -219,44 +219,49 @@ export default function BaptismalRecords() {
                     key={record.id} 
                     className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                    <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center justify-center w-6 h-6 lg:w-8 lg:h-8 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
                         {record.sNo || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">
+                        <div className="text-xs lg:text-sm font-semibold text-gray-900">
                           {record.baptismName || 'N/A'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs lg:text-sm text-gray-500">
                           {record.otherName && `${record.otherName} `}{record.surname || ''}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
                       {formatDate(record.dateOfBaptism)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
                       {formatDate(record.dateOfBirth)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        {record.placeOfBaptism || 'N/A'}
+                        <MapPin className="h-3 w-3 lg:h-4 lg:w-4 text-gray-400" />
+                        <span className="hidden lg:inline">{record.placeOfBaptism || 'N/A'}</span>
+                        <span className="lg:hidden truncate max-w-20">{record.placeOfBaptism || 'N/A'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {record.nameOfMinister || 'N/A'}
+                    <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap text-xs lg:text-sm text-gray-900">
+                      <div className="flex items-center gap-1">
+                        <User className="h-3 w-3 lg:h-4 lg:w-4 text-gray-400" />
+                        <span className="hidden lg:inline">{record.nameOfMinister || 'N/A'}</span>
+                        <span className="lg:hidden truncate max-w-20">{record.nameOfMinister || 'N/A'}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-3 lg:px-6 py-3 lg:py-4 whitespace-nowrap text-xs lg:text-sm">
                       <button
                         onClick={() => setSelectedRecord(record)}
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md"
+                        className="inline-flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md"
                         title="View record details"
                       >
-                        <Eye className="h-4 w-4" />
-                        <span className="font-medium">View</span>
+                        <Eye className="h-3 w-3 lg:h-4 lg:w-4" />
+                        <span className="font-medium hidden lg:inline">View</span>
                       </button>
                     </td>
                   </tr>

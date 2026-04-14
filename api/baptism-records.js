@@ -28,53 +28,57 @@ export default async (req, res) => {
       });
     }
 
-    // Return mock data for now since DATABASE_URL is not set
-    const mockRecords = [
-      {
-        id: 1,
-        sNo: "001",
-        baptismName: "John",
-        surname: "Doe",
-        dateOfBaptism: "2023-01-15T00:00:00.000Z",
-        placeOfBaptism: "St. Mary Parish"
-      },
-      {
-        id: 2,
-        sNo: "002", 
-        baptismName: "Jane",
-        surname: "Smith",
-        dateOfBaptism: "2023-02-20T00:00:00.000Z",
-        placeOfBaptism: "St. Mary Parish"
-      }
-    ];
-
+    // Initialize Prisma client dynamically
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    
     const { page = 1, limit = 20, search = '' } = req.query;
     const parsedPage = parseInt(page) || 1;
     const parsedLimit = Math.min(parseInt(limit) || 20, 100);
+    const skip = (parsedPage - 1) * parsedLimit;
 
     console.log('Parsed params:', { page: parsedPage, limit: parsedLimit, search });
 
-    // Filter mock data based on search
-    let filteredRecords = mockRecords;
+    // Build search conditions
+    let where = {};
     if (search && search.trim()) {
-      const searchTerm = search.trim().toLowerCase();
-      filteredRecords = mockRecords.filter(record => 
-        record.baptismName?.toLowerCase().includes(searchTerm) ||
-        record.surname?.toLowerCase().includes(searchTerm)
-      );
+      const searchTerm = search.trim();
+      where = {
+        OR: [
+          { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+          { surname: { contains: searchTerm, mode: 'insensitive' } },
+          { otherName: { contains: searchTerm, mode: 'insensitive' } },
+        ],
+      };
+      console.log('Search where clause:', JSON.stringify(where));
     }
 
-    // Apply pagination
-    const startIndex = (parsedPage - 1) * parsedLimit;
-    const endIndex = startIndex + parsedLimit;
-    const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
+    // Test database connection first
+    console.log('Testing database connection...');
+    await prisma.$connect();
+    console.log('Database connected successfully');
+
+    // Get total count
+    console.log('Executing count query...');
+    const total = await prisma.baptismRecord.count({ where });
+    console.log('Count result:', total);
+
+    // Get records with pagination
+    console.log('Executing findMany query...');
+    const records = await prisma.baptismRecord.findMany({
+      where,
+      skip,
+      take: parsedLimit,
+      orderBy: { sNo: 'asc' },
+    });
+    console.log('Records found:', records.length);
 
     const response = {
-      records: paginatedRecords,
-      total: filteredRecords.length,
+      records,
+      total,
       page: parsedPage,
       limit: parsedLimit,
-      totalPages: Math.ceil(filteredRecords.length / parsedLimit),
+      totalPages: Math.ceil(total / parsedLimit),
     };
 
     console.log('Sending response:', JSON.stringify(response));
@@ -90,5 +94,14 @@ export default async (req, res) => {
       message: error.message,
       type: error.constructor.name
     });
+  } finally {
+    if (prisma) {
+      try {
+        await prisma.$disconnect();
+        console.log('Database disconnected');
+      } catch (disconnectError) {
+        console.error('Disconnect error:', disconnectError);
+      }
+    }
   }
 };

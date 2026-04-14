@@ -559,7 +559,6 @@ export default function BaptismalRecords() {
           </div>
         </div>
       )}
-        </div>
       </div>
     </div>
   );

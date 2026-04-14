@@ -316,29 +316,30 @@ export default function BaptismalRecords() {
         )}
       </div>
 
-      {/* Enhanced Modal */}
+      {/* Enhanced Modal - Mobile Responsive */}
       {selectedRecord && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
-            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Church className="h-6 w-6" />
-                Baptism Record Details
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-2 sm:p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden my-4 sm:my-0">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <Church className="h-5 w-5 sm:h-6 sm:w-6" />
+                <span className="hidden sm:inline">Baptism Record Details</span>
+                <span className="sm:hidden">Record Details</span>
               </h2>
               <button
                 onClick={() => setSelectedRecord(null)}
                 className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-1 transition-all duration-200"
                 title="Close modal"
               >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             
-            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-              <div className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="overflow-y-auto max-h-[calc(95vh-60px)] sm:max-h-[calc(90vh-80px)]">
+              <div className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
                   {/* Basic Information */}
                   <div className="space-y-6">
                     <div>
@@ -346,32 +347,32 @@ export default function BaptismalRecords() {
                         <User className="h-5 w-5 text-blue-600" />
                         Basic Information
                       </h3>
-                      <div className="space-y-3 bg-gray-50 p-4 rounded-xl">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Serial Number:</span>
-                          <span className="font-semibold text-gray-900 bg-blue-100 px-3 py-1 rounded-full text-sm">
+                      <div className="space-y-3 bg-gray-50 p-3 sm:p-4 rounded-xl">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                          <span className="text-gray-600 font-medium text-sm">Serial Number:</span>
+                          <span className="font-semibold text-gray-900 bg-blue-100 px-2 py-1 rounded-full text-xs sm:text-sm">
                             {selectedRecord.sNo || 'N/A'}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Baptism Name:</span>
-                          <span className="font-semibold text-gray-900">{selectedRecord.baptismName || 'N/A'}</span>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                          <span className="text-gray-600 font-medium text-sm">Baptism Name:</span>
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">{selectedRecord.baptismName || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Other Names:</span>
-                          <span className="font-semibold text-gray-900">{selectedRecord.otherName || 'N/A'}</span>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                          <span className="text-gray-600 font-medium text-sm">Other Names:</span>
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">{selectedRecord.otherName || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Surname:</span>
-                          <span className="font-semibold text-gray-900">{selectedRecord.surname || 'N/A'}</span>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                          <span className="text-gray-600 font-medium text-sm">Surname:</span>
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">{selectedRecord.surname || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Date of Birth:</span>
-                          <span className="font-semibold text-gray-900">{formatDate(selectedRecord.dateOfBirth)}</span>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                          <span className="text-gray-600 font-medium text-sm">Date of Birth:</span>
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">{formatDate(selectedRecord.dateOfBirth)}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Home Town:</span>
-                          <span className="font-semibold text-gray-900">{selectedRecord.homeTown || 'N/A'}</span>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                          <span className="text-gray-600 font-medium text-sm">Home Town:</span>
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base text-right">{selectedRecord.homeTown || 'N/A'}</span>
                         </div>
                       </div>
                     </div>

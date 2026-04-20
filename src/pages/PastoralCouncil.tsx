@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Users, Church, Loader2, User, MapPin } from 'lucide-react';
+import { Search, Users, Church, Loader2, User, MapPin, Filter, Crown, BookOpen, Heart, Music, Shield, Star, Award } from 'lucide-react';
 
 export default function PastoralCouncil() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Anti-screenshot protection
   useEffect(() => {
@@ -112,14 +114,86 @@ export default function PastoralCouncil() {
     setLoading(false);
   }, []);
 
+  // Get category for member
+  const getMemberCategory = (member: any) => {
+    const position = member.position?.toLowerCase() || '';
+    const name = member.name?.toLowerCase() || '';
+    
+    // Clergy
+    if (name.includes('rev.') || name.includes('msgr.') || name.includes('fr.') || name.includes('very rev.')) {
+      return 'clergy';
+    }
+    
+    // Leadership positions
+    if (position.includes('chairman') || position.includes('chairlady') || position.includes('president') || position.includes('co-ordinator')) {
+      return 'leadership';
+    }
+    
+    // Finance
+    if (position.includes('secretary') || position.includes('treasurer') || position.includes('finance')) {
+      return 'finance';
+    }
+    
+    // Ministries
+    if (position.includes('min.') || position.includes('choir') || position.includes('music') || position.includes('evangelization') || position.includes('legion') || position.includes('cmo') || position.includes('cwo') || position.includes('cymo') || position.includes('cywo')) {
+      return 'ministries';
+    }
+    
+    // Zone representatives
+    if (member.zone && member.zone.includes('Zone')) {
+      return 'zones';
+    }
+    
+    return 'other';
+  };
+
+  // Get icon for category
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'clergy': return <Crown className="h-4 w-4" />;
+      case 'leadership': return <Star className="h-4 w-4" />;
+      case 'finance': return <Award className="h-4 w-4" />;
+      case 'ministries': return <Heart className="h-4 w-4" />;
+      case 'zones': return <MapPin className="h-4 w-4" />;
+      default: return <Users className="h-4 w-4" />;
+    }
+  };
+
+  // Filter members based on search and category
   const filteredMembers = members.filter(member => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const category = getMemberCategory(member);
+    
+    const matchesSearch = (
       member.name?.toLowerCase().includes(searchLower) ||
       member.position?.toLowerCase().includes(searchLower) ||
       member.zone?.toLowerCase().includes(searchLower)
     );
+    
+    const matchesCategory = selectedCategory === 'all' || category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
   });
+
+  // Get category statistics
+  const getCategoryStats = () => {
+    const stats: { [key: string]: number } = {
+      all: members.length,
+      clergy: 0,
+      leadership: 0,
+      finance: 0,
+      ministries: 0,
+      zones: 0,
+      other: 0
+    };
+    
+    members.forEach(member => {
+      const category = getMemberCategory(member);
+      stats[category]++;
+    });
+    
+    return stats;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -143,17 +217,75 @@ export default function PastoralCouncil() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search */}
+        {/* Search and Filters */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-8">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search by name, position, or zone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200"
-            />
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search by name, position, or zone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200"
+              />
+            </div>
+
+            {/* Filter Toggle */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-200"
+              >
+                <Filter className="h-4 w-4" />
+                <span className="font-medium">Filters</span>
+                <span className="bg-white text-blue-600 px-2 py-1 rounded-full text-xs font-semibold">
+                  {selectedCategory === 'all' ? 'All' : selectedCategory}
+                </span>
+              </button>
+              
+              <div className="text-sm text-gray-600">
+                Showing {filteredMembers.length} of {members.length} members
+              </div>
+            </div>
+
+            {/* Category Filters */}
+            {showFilters && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-xl">
+                {[
+                  { id: 'all', label: 'All Members', icon: Users },
+                  { id: 'clergy', label: 'Clergy', icon: Crown },
+                  { id: 'leadership', label: 'Leadership', icon: Star },
+                  { id: 'finance', label: 'Finance', icon: Award },
+                  { id: 'ministries', label: 'Ministries', icon: Heart },
+                  { id: 'zones', label: 'Zone Reps', icon: MapPin },
+                  { id: 'other', label: 'Other', icon: Users }
+                ].map(category => {
+                  const stats = getCategoryStats();
+                  const Icon = category.icon;
+                  const count = stats[category.id];
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all duration-200 ${
+                        selectedCategory === category.id
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <div className="text-left">
+                        <div className="text-sm font-medium">{category.label}</div>
+                        <div className="text-xs opacity-75">{count} members</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -198,35 +330,54 @@ export default function PastoralCouncil() {
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           Position
                         </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Category
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredMembers.map((member) => (
-                        <tr 
-                          key={member.id} 
-                          className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                              {member.sNo || 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-semibold text-gray-900">
-                              {member.name || 'N/A'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4 text-gray-400" />
-                              {member.zone || 'N/A'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {member.position || 'N/A'}
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredMembers.map((member) => {
+                        const category = getMemberCategory(member);
+                        return (
+                          <tr 
+                            key={member.id} 
+                            className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                                {member.sNo || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-semibold text-gray-900">
+                                {member.name || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4 text-gray-400" />
+                                {member.zone || 'N/A'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              <div className="font-medium">{member.position || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                category === 'clergy' ? 'bg-purple-100 text-purple-800' :
+                                category === 'leadership' ? 'bg-yellow-100 text-yellow-800' :
+                                category === 'finance' ? 'bg-green-100 text-green-800' :
+                                category === 'ministries' ? 'bg-pink-100 text-pink-800' :
+                                category === 'zones' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {getCategoryIcon(category)}
+                                <span className="capitalize">{category}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -244,34 +395,48 @@ export default function PastoralCouncil() {
             {/* Mobile View */}
             <div className="md:hidden">
               <div className="space-y-3">
-                {filteredMembers.map((member) => (
-                  <div 
-                    key={member.id} 
-                    className="bg-white border border-gray-200 rounded-xl p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                            {member.sNo || 'N/A'}
-                          </span>
-                          <div className="font-semibold text-gray-900">
-                            {member.name || 'N/A'}
+                {filteredMembers.map((member) => {
+                  const category = getMemberCategory(member);
+                  return (
+                    <div 
+                      key={member.id} 
+                      className="bg-white border border-gray-200 rounded-xl p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                              {member.sNo || 'N/A'}
+                            </span>
+                            <div className="font-semibold text-gray-900 text-sm">
+                              {member.name || 'N/A'}
+                            </div>
                           </div>
-                        </div>
-                        {member.zone && (
-                          <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                            <MapPin className="h-3 w-3" />
-                            {member.zone}
+                          {member.zone && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                              <MapPin className="h-3 w-3" />
+                              {member.zone}
+                            </div>
+                          )}
+                          <div className="text-sm text-gray-900 font-medium mb-2">
+                            {member.position || 'N/A'}
                           </div>
-                        )}
-                        <div className="text-sm text-gray-900 font-medium">
-                          {member.position || 'N/A'}
+                          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                            category === 'clergy' ? 'bg-purple-100 text-purple-800' :
+                            category === 'leadership' ? 'bg-yellow-100 text-yellow-800' :
+                            category === 'finance' ? 'bg-green-100 text-green-800' :
+                            category === 'ministries' ? 'bg-pink-100 text-pink-800' :
+                            category === 'zones' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {getCategoryIcon(category)}
+                            <span className="capitalize">{category}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {filteredMembers.length === 0 && (

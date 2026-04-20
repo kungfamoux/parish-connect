@@ -46,3 +46,19 @@ model BaptismRecord {
   @@index([surname])
   @@index([dateOfBaptism])
 }
+
+model ParishPastoralCouncil {
+  id          Int      @id @default(autoincrement())
+  sNo         Int      @map("S_NO")
+  name        String   @map("NAME")
+  zone        String?  @map("ZONE")
+  position    String   @map("POSITION")
+  isActive    Boolean  @default(true) @map("IS_ACTIVE")
+  createdAt   DateTime @default(now()) @map("CREATED_AT")
+  updatedAt   DateTime @updatedAt @map("UPDATED_AT")
+
+  @@map("parish_pastoral_council")
+  @@index([sNo])
+  @@index([name])
+  @@index([position])
+}

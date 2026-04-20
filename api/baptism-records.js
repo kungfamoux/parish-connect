@@ -17,7 +17,17 @@ export default async (req, res) => {
 
   // Handle POST request for initializing pastoral council data
   if (req.method === 'POST') {
+    let prisma;
     try {
+      // Initialize Prisma client
+      const { PrismaClient } = await import('@prisma/client');
+      prisma = new PrismaClient({
+        accelerateUrl: process.env.DATABASE_URL,
+        log: ['info', 'warn', 'error'],
+      });
+
+      await prisma.$connect();
+
       const councilMembers = [
         { sNo: 1, name: "Very Rev. Msgr. A. Anijielo", zone: null, position: "Parish Priest Chairman" },
         { sNo: 2, name: "Rev. Fr. Chinoso Odoh", zone: null, position: "Vicar Member" },

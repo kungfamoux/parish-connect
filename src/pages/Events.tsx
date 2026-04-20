@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
 import { Calendar, Clock, Megaphone, Bell, Users, Heart } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 
 const Events = () => (
-  <div className="min-h-screen flex flex-col">
-    <Navbar />
-    <main className="flex-1 pt-16">
+  <Layout>
     {/* Events Section */}
     <section className="py-24">
       <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
@@ -189,8 +187,7 @@ const Events = () => (
         </motion.div>
       </div>
     </section>
-    </main>
-  </div>
+  </Layout>
 );
 
 export default Events;

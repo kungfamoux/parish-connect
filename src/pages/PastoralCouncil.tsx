@@ -36,30 +36,25 @@ export default function PastoralCouncil() {
     };
   }, []);
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
+  // Static pastoral council members data
+  const staticMembers = [
+    { id: 1, sNo: 1, name: "Very Rev. Msgr. A. Anijielo", zone: null, position: "Parish Priest Chairman" },
+    { id: 2, sNo: 2, name: "Rev. Fr. Chinoso Odoh", zone: null, position: "Vicar Member" },
+    { id: 3, sNo: 3, name: "Dr Ifendu Ohabuike", zone: null, position: "DDL Member" },
+    { id: 4, sNo: 4, name: "Mr Paul Agu", zone: "Zone 12", position: "1st Vice Chairman" },
+    { id: 5, sNo: 5, name: "Chief (Sir) O.O. Apiakason", zone: "Zone 1", position: "2nd Vice Chairman" },
+    { id: 6, sNo: 6, name: "Dr Ifeanyi Ugwu", zone: "Zone 8", position: "Secretary" },
+    { id: 7, sNo: 7, name: "Mrs Rose Ozodiegwu", zone: "Zone 7", position: "Asst. Secretary" },
+    { id: 8, sNo: 8, name: "Chief Mrs. J. I. Obi", zone: "Zone 11", position: "Fin. Secretary" },
+    { id: 9, sNo: 9, name: "Amb. Paulinus Eze", zone: "Zone 3", position: "Treasurer" },
+    { id: 10, sNo: 10, name: "Mr Emmanuel Chime", zone: "Zone 13", position: "P.R.O" }
+  ];
 
-  const fetchMembers = async () => {
-    try {
-      setLoading(true);
-      
-      const response = await fetch('/api/pastoral-council');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setMembers(data.members || []);
-      
-    } catch (error) {
-      console.error('Error fetching pastoral council members:', error);
-      setError('Failed to load pastoral council members');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    // Set static data immediately
+    setMembers(staticMembers);
+    setLoading(false);
+  }, []);
 
   const filteredMembers = members.filter(member => {
     const searchLower = searchTerm.toLowerCase();

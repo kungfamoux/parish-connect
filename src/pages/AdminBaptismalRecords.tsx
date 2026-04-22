@@ -652,6 +652,8 @@ export default function AdminBaptismalRecords() {
                         value={formData.baptismName}
                         onChange={handleInputChange}
                         required
+                        placeholder="Enter baptism name"
+                        title="Baptism name (required)"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -666,6 +668,8 @@ export default function AdminBaptismalRecords() {
                         value={formData.surname}
                         onChange={handleInputChange}
                         required
+                        placeholder="Enter surname"
+                        title="Surname (required)"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -679,6 +683,8 @@ export default function AdminBaptismalRecords() {
                         name="otherName"
                         value={formData.otherName}
                         onChange={handleInputChange}
+                        placeholder="Enter other names (optional)"
+                        title="Other names"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -692,6 +698,7 @@ export default function AdminBaptismalRecords() {
                         name="dateOfBirth"
                         value={formData.dateOfBirth}
                         onChange={handleInputChange}
+                        title="Date of birth"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -705,6 +712,8 @@ export default function AdminBaptismalRecords() {
                         name="homeTown"
                         value={formData.homeTown}
                         onChange={handleInputChange}
+                        placeholder="Enter home town"
+                        title="Home town"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -726,6 +735,7 @@ export default function AdminBaptismalRecords() {
                         name="dateOfBaptism"
                         value={formData.dateOfBaptism}
                         onChange={handleInputChange}
+                        title="Date of baptism"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -739,6 +749,8 @@ export default function AdminBaptismalRecords() {
                         name="placeOfBaptism"
                         value={formData.placeOfBaptism}
                         onChange={handleInputChange}
+                        placeholder="Enter place of baptism"
+                        title="Place of baptism"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -751,6 +763,7 @@ export default function AdminBaptismalRecords() {
                         name="solemnOrPrivate"
                         value={formData.solemnOrPrivate}
                         onChange={handleInputChange}
+                        title="Type of baptism"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
                         <option value="">Select Type</option>
@@ -768,6 +781,8 @@ export default function AdminBaptismalRecords() {
                         name="nameOfMinister"
                         value={formData.nameOfMinister}
                         onChange={handleInputChange}
+                        placeholder="Enter minister name"
+                        title="Name of minister"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -781,6 +796,8 @@ export default function AdminBaptismalRecords() {
                         value={formData.nameOfGodParents}
                         onChange={handleInputChange}
                         rows={2}
+                        placeholder="Enter god parents names"
+                        title="Names of god parents"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -799,6 +816,8 @@ export default function AdminBaptismalRecords() {
                         name="fathersName"
                         value={formData.fathersName}
                         onChange={handleInputChange}
+                        placeholder="Enter father's name"
+                        title="Father's name"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -812,6 +831,8 @@ export default function AdminBaptismalRecords() {
                         name="mothersName"
                         value={formData.mothersName}
                         onChange={handleInputChange}
+                        placeholder="Enter mother's name"
+                        title="Mother's name"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -833,6 +854,7 @@ export default function AdminBaptismalRecords() {
                         name="firstHolyCommunionDate"
                         value={formData.firstHolyCommunionDate}
                         onChange={handleInputChange}
+                        title="First Holy Communion date"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -846,6 +868,8 @@ export default function AdminBaptismalRecords() {
                         name="firstHolyCommunionPlace"
                         value={formData.firstHolyCommunionPlace}
                         onChange={handleInputChange}
+                        placeholder="Enter First Holy Communion place"
+                        title="First Holy Communion place"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -859,6 +883,7 @@ export default function AdminBaptismalRecords() {
                         name="confirmationDate"
                         value={formData.confirmationDate}
                         onChange={handleInputChange}
+                        title="Confirmation date"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -872,6 +897,8 @@ export default function AdminBaptismalRecords() {
                         name="confirmationPlace"
                         value={formData.confirmationPlace}
                         onChange={handleInputChange}
+                        placeholder="Enter confirmation place"
+                        title="Confirmation place"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -890,6 +917,7 @@ export default function AdminBaptismalRecords() {
                         name="marriageDate"
                         value={formData.marriageDate}
                         onChange={handleInputChange}
+                        title="Marriage date"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -903,6 +931,8 @@ export default function AdminBaptismalRecords() {
                         name="marriagePartnerName"
                         value={formData.marriagePartnerName}
                         onChange={handleInputChange}
+                        placeholder="Enter partner's name"
+                        title="Marriage partner's name"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -916,6 +946,8 @@ export default function AdminBaptismalRecords() {
                         name="marriagePlace"
                         value={formData.marriagePlace}
                         onChange={handleInputChange}
+                        placeholder="Enter marriage place"
+                        title="Marriage place"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -934,6 +966,7 @@ export default function AdminBaptismalRecords() {
                         name="dateOfDeath"
                         value={formData.dateOfDeath}
                         onChange={handleInputChange}
+                        title="Date of death"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
@@ -947,6 +980,8 @@ export default function AdminBaptismalRecords() {
                         value={formData.remarks}
                         onChange={handleInputChange}
                         rows={3}
+                        placeholder="Enter any additional remarks"
+                        title="Additional remarks"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>

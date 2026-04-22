@@ -379,6 +379,8 @@ export default async (req, res) => {
 
     // Build search conditions
     let where = {};
+    let orderBy = { sNo: 'asc' };
+    
     if (search && search.trim()) {
       const searchTerm = search.trim();
       
@@ -389,103 +391,164 @@ export default async (req, res) => {
         const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
         console.log('Search words:', searchWords);
         
-        // Create search conditions
-        let searchConditions = [];
-        
-        // Always include the original full term search (for backward compatibility)
-        searchConditions.push(
-          { baptismName: { contains: searchTerm, mode: 'insensitive' } },
-          { surname: { contains: searchTerm, mode: 'insensitive' } },
-          { otherName: { contains: searchTerm, mode: 'insensitive' } },
-          { fathersName: { contains: searchTerm, mode: 'insensitive' } },
-          { mothersName: { contains: searchTerm, mode: 'insensitive' } }
-        );
-        
-        // For full names (multiple words), create more sophisticated search
-        if (searchWords.length > 1) {
-          // Create combinations for full name search
-          // e.g., "GEORGENA NGOZICHUKWUKA ONU" should match:
-          // - baptismName="GEORGENA" AND surname="ONU" (if otherName contains middle name)
-          // - baptismName="GEORGENA" AND surname contains "ONU"
-          // - baptismName contains "GEORGENA" AND surname="ONU"
+        // For full names (multiple words), try exact match first
+        if (searchWords.length >= 2) {
+          // Try exact full name match first - this will be prioritized
+          const exactMatchConditions = [];
           
-          // Try different combinations of name fields
-          for (let i = 0; i < searchWords.length; i++) {
-            for (let j = i + 1; j < searchWords.length; j++) {
-              const firstWord = searchWords[i];
-              const secondWord = searchWords[j];
-              
-              // Check baptismName + surname combinations
-              searchConditions.push({
-                AND: [
-                  { baptismName: { contains: firstWord, mode: 'insensitive' } },
-                  { surname: { contains: secondWord, mode: 'insensitive' } }
-                ]
-              });
-              
-              // Check baptismName + otherName combinations
-              searchConditions.push({
-                AND: [
-                  { baptismName: { contains: firstWord, mode: 'insensitive' } },
-                  { otherName: { contains: secondWord, mode: 'insensitive' } }
-                ]
-              });
-              
-              // Check otherName + surname combinations
-              searchConditions.push({
-                AND: [
-                  { otherName: { contains: firstWord, mode: 'insensitive' } },
-                  { surname: { contains: secondWord, mode: 'insensitive' } }
-                ]
-              });
+          // Exact match for baptismName + surname (most common case)
+          if (searchWords.length === 2) {
+            exactMatchConditions.push({
+              AND: [
+                { baptismName: { equals: searchWords[0], mode: 'insensitive' } },
+                { surname: { equals: searchWords[1], mode: 'insensitive' } }
+              ]
+            });
+          }
+          
+          // Exact match for three-part names (baptismName + otherName + surname)
+          if (searchWords.length === 3) {
+            exactMatchConditions.push({
+              AND: [
+                { baptismName: { equals: searchWords[0], mode: 'insensitive' } },
+                { otherName: { equals: searchWords[1], mode: 'insensitive' } },
+                { surname: { equals: searchWords[2], mode: 'insensitive' } }
+              ]
+            });
+          }
+          
+          // If we have exact match conditions, try them first
+          if (exactMatchConditions.length > 0) {
+            console.log('Trying exact full name match first...');
+            
+            // Test if exact match exists
+            const exactMatchCount = await prisma.baptismRecord.count({
+              where: { OR: exactMatchConditions }
+            });
+            
+            console.log('Exact match count:', exactMatchCount);
+            
+            // If exact match found, use only exact match conditions
+            if (exactMatchCount > 0) {
+              where = { OR: exactMatchConditions };
+              console.log('Using exact match conditions only');
+            } else {
+              // No exact match, fall back to broader search
+              console.log('No exact match found, using broader search');
+              where = createBroaderSearchConditions(searchWords, searchTerm);
             }
+          } else {
+            // Use broader search for other cases
+            where = createBroaderSearchConditions(searchWords, searchTerm);
           }
+        } else {
+          // Single word search - use existing logic
+          where = {
+            OR: [
+              { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+              { surname: { contains: searchTerm, mode: 'insensitive' } },
+              { otherName: { contains: searchTerm, mode: 'insensitive' } },
+              { fathersName: { contains: searchTerm, mode: 'insensitive' } },
+              { mothersName: { contains: searchTerm, mode: 'insensitive' } }
+            ]
+          };
           
-          // For three-word names, try first + last combinations
-          if (searchWords.length >= 3) {
-            const firstName = searchWords[0];
-            const lastName = searchWords[searchWords.length - 1];
-            
-            searchConditions.push({
-              AND: [
-                { baptismName: { contains: firstName, mode: 'insensitive' } },
-                { surname: { contains: lastName, mode: 'insensitive' } }
-              ]
-            });
-            
-            // Also try with otherName containing middle name
-            searchConditions.push({
-              AND: [
-                { baptismName: { contains: firstName, mode: 'insensitive' } },
-                { otherName: { contains: searchWords[1], mode: 'insensitive' } },
-                { surname: { contains: lastName, mode: 'insensitive' } }
-              ]
-            });
+          // Try to add serial number search if it's a pure number
+          if (/^\d+$/.test(searchTerm)) {
+            where.OR.push({ sNo: parseInt(searchTerm) });
           }
         }
         
-        // Add individual word searches for flexibility
-        searchWords.forEach(word => {
-          if (word.length >= 2) {
-            searchConditions.push(
-              { baptismName: { contains: word, mode: 'insensitive' } },
-              { surname: { contains: word, mode: 'insensitive' } },
-              { otherName: { contains: word, mode: 'insensitive' } }
-            );
-          }
-        });
-        
-        // Try to add serial number search if it's a pure number
-        if (/^\d+$/.test(searchTerm)) {
-          searchConditions.push({ sNo: parseInt(searchTerm) });
-        }
-        
-        where = { OR: searchConditions };
-        
-        console.log('Enhanced search where clause with', searchConditions.length, 'conditions');
+        console.log('Final search where clause:', JSON.stringify(where));
       } else {
         console.log('Search term too short or contains invalid characters:', searchTerm);
       }
+    }
+    
+    // Helper function to create broader search conditions
+    function createBroaderSearchConditions(searchWords, searchTerm) {
+      let searchConditions = [];
+      
+      // Always include the original full term search (for backward compatibility)
+      searchConditions.push(
+        { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+        { surname: { contains: searchTerm, mode: 'insensitive' } },
+        { otherName: { contains: searchTerm, mode: 'insensitive' } },
+        { fathersName: { contains: searchTerm, mode: 'insensitive' } },
+        { mothersName: { contains: searchTerm, mode: 'insensitive' } }
+      );
+      
+      // Create combinations for full name search
+      for (let i = 0; i < searchWords.length; i++) {
+        for (let j = i + 1; j < searchWords.length; j++) {
+          const firstWord = searchWords[i];
+          const secondWord = searchWords[j];
+          
+          // Check baptismName + surname combinations
+          searchConditions.push({
+            AND: [
+              { baptismName: { contains: firstWord, mode: 'insensitive' } },
+              { surname: { contains: secondWord, mode: 'insensitive' } }
+            ]
+          });
+          
+          // Check baptismName + otherName combinations
+          searchConditions.push({
+            AND: [
+              { baptismName: { contains: firstWord, mode: 'insensitive' } },
+              { otherName: { contains: secondWord, mode: 'insensitive' } }
+            ]
+          });
+          
+          // Check otherName + surname combinations
+          searchConditions.push({
+            AND: [
+              { otherName: { contains: firstWord, mode: 'insensitive' } },
+              { surname: { contains: secondWord, mode: 'insensitive' } }
+            ]
+          });
+        }
+      }
+      
+      // For three-word names, try first + last combinations
+      if (searchWords.length >= 3) {
+        const firstName = searchWords[0];
+        const lastName = searchWords[searchWords.length - 1];
+        
+        searchConditions.push({
+          AND: [
+            { baptismName: { contains: firstName, mode: 'insensitive' } },
+            { surname: { contains: lastName, mode: 'insensitive' } }
+          ]
+        });
+        
+        // Also try with otherName containing middle name
+        searchConditions.push({
+          AND: [
+            { baptismName: { contains: firstName, mode: 'insensitive' } },
+            { otherName: { contains: searchWords[1], mode: 'insensitive' } },
+            { surname: { contains: lastName, mode: 'insensitive' } }
+          ]
+        });
+      }
+      
+      // Add individual word searches for flexibility
+      searchWords.forEach(word => {
+        if (word.length >= 2) {
+          searchConditions.push(
+            { baptismName: { contains: word, mode: 'insensitive' } },
+            { surname: { contains: word, mode: 'insensitive' } },
+            { otherName: { contains: word, mode: 'insensitive' } }
+          );
+        }
+      });
+      
+      // Try to add serial number search if it's a pure number
+      if (/^\d+$/.test(searchTerm)) {
+        searchConditions.push({ sNo: parseInt(searchTerm) });
+      }
+      
+      return { OR: searchConditions };
     }
 
     // Test database connection first
@@ -504,7 +567,7 @@ export default async (req, res) => {
       where,
       skip,
       take: parsedLimit,
-      orderBy: { sNo: 'asc' },
+      orderBy,
     });
     console.log('Records found:', records.length);
 

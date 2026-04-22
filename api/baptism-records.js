@@ -10,7 +10,7 @@ export default async (req, res) => {
     return;
   }
 
-  if (req.method !== 'GET' && req.method !== 'POST') {
+  if (req.method !== 'GET' && req.method !== 'POST' && req.method !== 'DELETE') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -57,6 +57,121 @@ export default async (req, res) => {
       console.error('Pastoral council initialization error:', error);
       res.status(500).json({ 
         error: 'Failed to initialize pastoral council',
+        message: error.message
+      });
+    } finally {
+      if (prisma) {
+        await prisma.$disconnect();
+      }
+    }
+    return;
+  }
+
+  // Handle DELETE request for deleting baptismal records
+  if (req.method === 'DELETE') {
+    let prisma;
+    try {
+      // Initialize Prisma client
+      const { PrismaClient } = await import('@prisma/client');
+      prisma = new PrismaClient({
+        accelerateUrl: process.env.DATABASE_URL,
+        log: ['info', 'warn', 'error'],
+      });
+
+      await prisma.$connect();
+
+      const { id, deleteEmpty } = req.query;
+
+      // Delete specific record by ID
+      if (id) {
+        const recordId = parseInt(id);
+        if (isNaN(recordId)) {
+          res.status(400).json({ error: 'Invalid record ID' });
+          return;
+        }
+
+        // Check if record exists
+        const existingRecord = await prisma.baptismRecord.findUnique({
+          where: { id: recordId }
+        });
+
+        if (!existingRecord) {
+          res.status(404).json({ error: 'Record not found' });
+          return;
+        }
+
+        const deletedRecord = await prisma.baptismRecord.delete({
+          where: { id: recordId }
+        });
+
+        console.log('Deleted baptismal record:', deletedRecord.id);
+
+        res.status(200).json({
+          message: 'Record deleted successfully',
+          deletedRecord: {
+            id: deletedRecord.id,
+            sNo: deletedRecord.sNo,
+            baptismName: deletedRecord.baptismName
+          }
+        });
+
+      } 
+      // Delete all empty records
+      else if (deleteEmpty === 'true') {
+        // Find records with all essential fields empty or null
+        const emptyRecords = await prisma.baptismRecord.findMany({
+          where: {
+            OR: [
+              { baptismName: { equals: '' } },
+              { baptismName: null },
+              { surname: { equals: '' } },
+              { surname: null },
+            ]
+          }
+        });
+
+        if (emptyRecords.length === 0) {
+          res.status(200).json({
+            message: 'No empty records found',
+            deletedCount: 0
+          });
+          return;
+        }
+
+        // Delete all empty records
+        const deleteResult = await prisma.baptismRecord.deleteMany({
+          where: {
+            OR: [
+              { baptismName: { equals: '' } },
+              { baptismName: null },
+              { surname: { equals: '' } },
+              { surname: null },
+            ]
+          }
+        });
+
+        console.log('Deleted empty baptismal records:', deleteResult.count);
+
+        res.status(200).json({
+          message: `Deleted ${deleteResult.count} empty records successfully`,
+          deletedCount: deleteResult.count,
+          deletedRecords: emptyRecords.map(record => ({
+            id: record.id,
+            sNo: record.sNo,
+            baptismName: record.baptismName,
+            surname: record.surname
+          }))
+        });
+      } else {
+        res.status(400).json({ 
+          error: 'Invalid request. Provide either "id" to delete specific record or "deleteEmpty=true" to delete empty records' 
+        });
+      }
+
+    } catch (error) {
+      console.error('Delete baptismal records error:', error);
+      res.status(500).json({ 
+        error: 'Failed to delete baptismal records',
         message: error.message
       });
     } finally {

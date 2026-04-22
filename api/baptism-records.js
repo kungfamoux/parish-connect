@@ -2,7 +2,7 @@
 export default async (req, res) => {
   // Set CORS headers first
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -10,7 +10,7 @@ export default async (req, res) => {
     return;
   }
 
-  if (req.method !== 'GET' && req.method !== 'POST' && req.method !== 'DELETE') {
+  if (req.method !== 'GET' && req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'DELETE') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -241,6 +241,104 @@ export default async (req, res) => {
       console.error('Delete baptismal records error:', error);
       res.status(500).json({ 
         error: 'Failed to delete baptismal records',
+        message: error.message
+      });
+    } finally {
+      if (prisma) {
+        await prisma.$disconnect();
+      }
+    }
+    return;
+  }
+
+  // Handle PUT request for updating baptismal records
+  if (req.method === 'PUT') {
+    let prisma;
+    try {
+      // Initialize Prisma client
+      const { PrismaClient } = await import('@prisma/client');
+      prisma = new PrismaClient({
+        accelerateUrl: process.env.DATABASE_URL,
+        log: ['info', 'warn', 'error'],
+      });
+
+      await prisma.$connect();
+
+      const { id } = req.query;
+      const body = req.body;
+
+      if (!id) {
+        res.status(400).json({ error: 'Record ID is required' });
+        return;
+      }
+
+      const recordId = parseInt(id);
+      if (isNaN(recordId)) {
+        res.status(400).json({ error: 'Invalid record ID' });
+        return;
+      }
+
+      // Check if record exists
+      const existingRecord = await prisma.baptismRecord.findUnique({
+        where: { id: recordId }
+      });
+
+      if (!existingRecord) {
+        res.status(404).json({ error: 'Record not found' });
+        return;
+      }
+
+      // Validate required fields
+      const requiredFields = ['baptismName', 'surname'];
+      const missingFields = requiredFields.filter(field => !body[field] || body[field].trim() === '');
+      
+      if (missingFields.length > 0) {
+        res.status(400).json({ 
+          error: 'Missing required fields', 
+          missingFields 
+        });
+        return;
+      }
+
+      // Update the record
+      const updatedRecord = await prisma.baptismRecord.update({
+        where: { id: recordId },
+        data: {
+          baptismName: body.baptismName.trim(),
+          surname: body.surname.trim(),
+          otherName: body.otherName?.trim() || null,
+          dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
+          dateOfBaptism: body.dateOfBaptism ? new Date(body.dateOfBaptism) : null,
+          placeOfBaptism: body.placeOfBaptism?.trim() || null,
+          nameOfMinister: body.nameOfMinister?.trim() || null,
+          nameOfGodParents: body.nameOfGodParents?.trim() || null,
+          solemnOrPrivate: body.solemnOrPrivate?.trim() || null,
+          fathersName: body.fathersName?.trim() || null,
+          mothersName: body.mothersName?.trim() || null,
+          homeTown: body.homeTown?.trim() || null,
+          firstHolyCommunionDate: body.firstHolyCommunionDate ? new Date(body.firstHolyCommunionDate) : null,
+          firstHolyCommunionPlace: body.firstHolyCommunionPlace?.trim() || null,
+          confirmationDate: body.confirmationDate ? new Date(body.confirmationDate) : null,
+          confirmationPlace: body.confirmationPlace?.trim() || null,
+          marriageDate: body.marriageDate ? new Date(body.marriageDate) : null,
+          marriagePartnerName: body.marriagePartnerName?.trim() || null,
+          marriagePlace: body.marriagePlace?.trim() || null,
+          dateOfDeath: body.dateOfDeath ? new Date(body.dateOfDeath) : null,
+          remarks: body.remarks?.trim() || null,
+        }
+      });
+
+      console.log('Updated baptismal record:', updatedRecord.id);
+
+      res.status(200).json({
+        message: 'Baptismal record updated successfully',
+        record: updatedRecord
+      });
+
+    } catch (error) {
+      console.error('Update baptismal records error:', error);
+      res.status(500).json({ 
+        error: 'Failed to update baptismal records',
         message: error.message
       });
     } finally {

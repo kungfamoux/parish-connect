@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, AlertTriangle, Database, Users, RefreshCw, Shield, Eye, Loader2, Plus, X, Calendar, User as UserIcon, MapPin, Church } from 'lucide-react';
+import { Search, Trash2, AlertTriangle, Database, Users, RefreshCw, Shield, Eye, Loader2, Plus, X, Calendar, User as UserIcon, MapPin, Church, Edit } from 'lucide-react';
 
 export default function AdminBaptismalRecords() {
   const [records, setRecords] = useState<any[]>([]);
@@ -14,6 +14,8 @@ export default function AdminBaptismalRecords() {
   const [actionLoading, setActionLoading] = useState(false);
   const [emptyRecordsCount, setEmptyRecordsCount] = useState(0);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     baptismName: '',
     surname: '',
@@ -218,6 +220,92 @@ export default function AdminBaptismalRecords() {
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create record');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEdit = (record: any) => {
+    setEditingRecord(record);
+    setFormData({
+      baptismName: record.baptismName || '',
+      surname: record.surname || '',
+      otherName: record.otherName || '',
+      dateOfBirth: record.dateOfBirth ? new Date(record.dateOfBirth).toISOString().split('T')[0] : '',
+      dateOfBaptism: record.dateOfBaptism ? new Date(record.dateOfBaptism).toISOString().split('T')[0] : '',
+      placeOfBaptism: record.placeOfBaptism || '',
+      nameOfMinister: record.nameOfMinister || '',
+      nameOfGodParents: record.nameOfGodParents || '',
+      solemnOrPrivate: record.solemnOrPrivate || '',
+      fathersName: record.fathersName || '',
+      mothersName: record.mothersName || '',
+      homeTown: record.homeTown || '',
+      firstHolyCommunionDate: record.firstHolyCommunionDate ? new Date(record.firstHolyCommunionDate).toISOString().split('T')[0] : '',
+      firstHolyCommunionPlace: record.firstHolyCommunionPlace || '',
+      confirmationDate: record.confirmationDate ? new Date(record.confirmationDate).toISOString().split('T')[0] : '',
+      confirmationPlace: record.confirmationPlace || '',
+      marriageDate: record.marriageDate ? new Date(record.marriageDate).toISOString().split('T')[0] : '',
+      marriagePartnerName: record.marriagePartnerName || '',
+      marriagePlace: record.marriagePlace || '',
+      dateOfDeath: record.dateOfDeath ? new Date(record.dateOfDeath).toISOString().split('T')[0] : '',
+      remarks: record.remarks || ''
+    });
+    setShowEditForm(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading(true);
+    
+    try {
+      const response = await fetch(`/api/baptism-records?id=${editingRecord.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update record');
+      }
+      
+      const result = await response.json();
+      console.log('Record updated:', result);
+      
+      // Reset form and close
+      setFormData({
+        baptismName: '',
+        surname: '',
+        otherName: '',
+        dateOfBirth: '',
+        dateOfBaptism: '',
+        placeOfBaptism: '',
+        nameOfMinister: '',
+        nameOfGodParents: '',
+        solemnOrPrivate: '',
+        fathersName: '',
+        mothersName: '',
+        homeTown: '',
+        firstHolyCommunionDate: '',
+        firstHolyCommunionPlace: '',
+        confirmationDate: '',
+        confirmationPlace: '',
+        marriageDate: '',
+        marriagePartnerName: '',
+        marriagePlace: '',
+        dateOfDeath: '',
+        remarks: ''
+      });
+      setShowEditForm(false);
+      setEditingRecord(null);
+      
+      // Refresh records
+      await fetchRecords();
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update record');
     } finally {
       setActionLoading(false);
     }
@@ -471,6 +559,14 @@ export default function AdminBaptismalRecords() {
                         >
                           <Eye className="h-4 w-4" />
                           <span className="font-medium">View</span>
+                        </button>
+                        <button
+                          onClick={() => handleEdit(record)}
+                          className="inline-flex items-center gap-1 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all duration-200"
+                          title="Edit record"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="font-medium">Edit</span>
                         </button>
                         {deleteConfirm === record.id ? (
                           <div className="flex items-center gap-1">
@@ -1004,6 +1100,410 @@ export default function AdminBaptismalRecords() {
                   <button
                     type="button"
                     onClick={() => setShowAddForm(false)}
+                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Record Modal */}
+      {showEditForm && editingRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="sticky top-0 bg-gradient-to-r from-yellow-600 to-orange-600 text-white px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Edit className="h-6 w-6" />
+                Edit Baptismal Record - S/No: {editingRecord.sNo}
+              </h2>
+              <button
+                onClick={() => setShowEditForm(false)}
+                className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-1 transition-all duration-200"
+                title="Close modal"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+              <form onSubmit={handleUpdate} className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <UserIcon className="h-5 w-5 text-yellow-600" />
+                      Basic Information
+                    </h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Baptism Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="baptismName"
+                        value={formData.baptismName}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter baptism name"
+                        title="Baptism name (required)"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Surname *
+                      </label>
+                      <input
+                        type="text"
+                        name="surname"
+                        value={formData.surname}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter surname"
+                        title="Surname (required)"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Other Names
+                      </label>
+                      <input
+                        type="text"
+                        name="otherName"
+                        value={formData.otherName}
+                        onChange={handleInputChange}
+                        placeholder="Enter other names (optional)"
+                        title="Other names"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date of Birth
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={formData.dateOfBirth}
+                        onChange={handleInputChange}
+                        title="Date of birth"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Home Town
+                      </label>
+                      <input
+                        type="text"
+                        name="homeTown"
+                        value={formData.homeTown}
+                        onChange={handleInputChange}
+                        placeholder="Enter home town"
+                        title="Home town"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Baptism Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <Church className="h-5 w-5 text-yellow-600" />
+                      Baptism Information
+                    </h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date of Baptism
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOfBaptism"
+                        value={formData.dateOfBaptism}
+                        onChange={handleInputChange}
+                        title="Date of baptism"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Place of Baptism
+                      </label>
+                      <input
+                        type="text"
+                        name="placeOfBaptism"
+                        value={formData.placeOfBaptism}
+                        onChange={handleInputChange}
+                        placeholder="Enter place of baptism"
+                        title="Place of baptism"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Type
+                      </label>
+                      <select
+                        name="solemnOrPrivate"
+                        value={formData.solemnOrPrivate}
+                        onChange={handleInputChange}
+                        title="Type of baptism"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      >
+                        <option value="">Select Type</option>
+                        <option value="Solemn">Solemn</option>
+                        <option value="Private">Private</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Minister
+                      </label>
+                      <input
+                        type="text"
+                        name="nameOfMinister"
+                        value={formData.nameOfMinister}
+                        onChange={handleInputChange}
+                        placeholder="Enter minister name"
+                        title="Name of minister"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        God Parents
+                      </label>
+                      <textarea
+                        name="nameOfGodParents"
+                        value={formData.nameOfGodParents}
+                        onChange={handleInputChange}
+                        rows={2}
+                        placeholder="Enter god parents names"
+                        title="Names of god parents"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Parents Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Parents Information</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Father's Name
+                      </label>
+                      <input
+                        type="text"
+                        name="fathersName"
+                        value={formData.fathersName}
+                        onChange={handleInputChange}
+                        placeholder="Enter father's name"
+                        title="Father's name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Mother's Name
+                      </label>
+                      <input
+                        type="text"
+                        name="mothersName"
+                        value={formData.mothersName}
+                        onChange={handleInputChange}
+                        placeholder="Enter mother's name"
+                        title="Mother's name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Other Sacraments */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-yellow-600" />
+                      Other Sacraments
+                    </h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        First Holy Communion Date
+                      </label>
+                      <input
+                        type="date"
+                        name="firstHolyCommunionDate"
+                        value={formData.firstHolyCommunionDate}
+                        onChange={handleInputChange}
+                        title="First Holy Communion date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        First Holy Communion Place
+                      </label>
+                      <input
+                        type="text"
+                        name="firstHolyCommunionPlace"
+                        value={formData.firstHolyCommunionPlace}
+                        onChange={handleInputChange}
+                        placeholder="Enter First Holy Communion place"
+                        title="First Holy Communion place"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmation Date
+                      </label>
+                      <input
+                        type="date"
+                        name="confirmationDate"
+                        value={formData.confirmationDate}
+                        onChange={handleInputChange}
+                        title="Confirmation date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmation Place
+                      </label>
+                      <input
+                        type="text"
+                        name="confirmationPlace"
+                        value={formData.confirmationPlace}
+                        onChange={handleInputChange}
+                        placeholder="Enter confirmation place"
+                        title="Confirmation place"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Marriage Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Marriage Information</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Marriage Date
+                      </label>
+                      <input
+                        type="date"
+                        name="marriageDate"
+                        value={formData.marriageDate}
+                        onChange={handleInputChange}
+                        title="Marriage date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Partner's Name
+                      </label>
+                      <input
+                        type="text"
+                        name="marriagePartnerName"
+                        value={formData.marriagePartnerName}
+                        onChange={handleInputChange}
+                        placeholder="Enter partner's name"
+                        title="Marriage partner's name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Marriage Place
+                      </label>
+                      <input
+                        type="text"
+                        name="marriagePlace"
+                        value={formData.marriagePlace}
+                        onChange={handleInputChange}
+                        placeholder="Enter marriage place"
+                        title="Marriage place"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Additional Information */}
+                  <div className="md:col-span-2 space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Additional Information</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date of Death
+                      </label>
+                      <input
+                        type="date"
+                        name="dateOfDeath"
+                        value={formData.dateOfDeath}
+                        onChange={handleInputChange}
+                        title="Date of death"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Remarks
+                      </label>
+                      <textarea
+                        name="remarks"
+                        value={formData.remarks}
+                        onChange={handleInputChange}
+                        rows={3}
+                        placeholder="Enter any additional remarks"
+                        title="Additional remarks"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-xl hover:from-yellow-700 hover:to-orange-700 disabled:opacity-50 transition-all duration-200 shadow-md font-medium"
+                  >
+                    {actionLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Edit className="h-5 w-5" />
+                    )}
+                    Update Record
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditForm(false);
+                      setEditingRecord(null);
+                    }}
                     className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
                   >
                     Cancel

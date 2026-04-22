@@ -383,23 +383,106 @@ export default async (req, res) => {
       const searchTerm = search.trim();
       
       // Only search if term is reasonable (not too short or just special characters)
-      if (searchTerm.length >= 2 && /^[a-zA-Z0-9\s]+$/.test(searchTerm)) {
-        where = {
-          OR: [
-            { baptismName: { contains: searchTerm, mode: 'insensitive' } },
-            { surname: { contains: searchTerm, mode: 'insensitive' } },
-            { otherName: { contains: searchTerm, mode: 'insensitive' } },
-            { fathersName: { contains: searchTerm, mode: 'insensitive' } },
-            { mothersName: { contains: searchTerm, mode: 'insensitive' } },
-          ],
-        };
+      if (searchTerm.length >= 2 && /^[a-zA-Z0-9\s\-']+$/.test(searchTerm)) {
+        
+        // Split search term into words for better full name matching
+        const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
+        console.log('Search words:', searchWords);
+        
+        // Create search conditions
+        let searchConditions = [];
+        
+        // Always include the original full term search (for backward compatibility)
+        searchConditions.push(
+          { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+          { surname: { contains: searchTerm, mode: 'insensitive' } },
+          { otherName: { contains: searchTerm, mode: 'insensitive' } },
+          { fathersName: { contains: searchTerm, mode: 'insensitive' } },
+          { mothersName: { contains: searchTerm, mode: 'insensitive' } }
+        );
+        
+        // For full names (multiple words), create more sophisticated search
+        if (searchWords.length > 1) {
+          // Create combinations for full name search
+          // e.g., "GEORGENA NGOZICHUKWUKA ONU" should match:
+          // - baptismName="GEORGENA" AND surname="ONU" (if otherName contains middle name)
+          // - baptismName="GEORGENA" AND surname contains "ONU"
+          // - baptismName contains "GEORGENA" AND surname="ONU"
+          
+          // Try different combinations of name fields
+          for (let i = 0; i < searchWords.length; i++) {
+            for (let j = i + 1; j < searchWords.length; j++) {
+              const firstWord = searchWords[i];
+              const secondWord = searchWords[j];
+              
+              // Check baptismName + surname combinations
+              searchConditions.push({
+                AND: [
+                  { baptismName: { contains: firstWord, mode: 'insensitive' } },
+                  { surname: { contains: secondWord, mode: 'insensitive' } }
+                ]
+              });
+              
+              // Check baptismName + otherName combinations
+              searchConditions.push({
+                AND: [
+                  { baptismName: { contains: firstWord, mode: 'insensitive' } },
+                  { otherName: { contains: secondWord, mode: 'insensitive' } }
+                ]
+              });
+              
+              // Check otherName + surname combinations
+              searchConditions.push({
+                AND: [
+                  { otherName: { contains: firstWord, mode: 'insensitive' } },
+                  { surname: { contains: secondWord, mode: 'insensitive' } }
+                ]
+              });
+            }
+          }
+          
+          // For three-word names, try first + last combinations
+          if (searchWords.length >= 3) {
+            const firstName = searchWords[0];
+            const lastName = searchWords[searchWords.length - 1];
+            
+            searchConditions.push({
+              AND: [
+                { baptismName: { contains: firstName, mode: 'insensitive' } },
+                { surname: { contains: lastName, mode: 'insensitive' } }
+              ]
+            });
+            
+            // Also try with otherName containing middle name
+            searchConditions.push({
+              AND: [
+                { baptismName: { contains: firstName, mode: 'insensitive' } },
+                { otherName: { contains: searchWords[1], mode: 'insensitive' } },
+                { surname: { contains: lastName, mode: 'insensitive' } }
+              ]
+            });
+          }
+        }
+        
+        // Add individual word searches for flexibility
+        searchWords.forEach(word => {
+          if (word.length >= 2) {
+            searchConditions.push(
+              { baptismName: { contains: word, mode: 'insensitive' } },
+              { surname: { contains: word, mode: 'insensitive' } },
+              { otherName: { contains: word, mode: 'insensitive' } }
+            );
+          }
+        });
         
         // Try to add serial number search if it's a pure number
         if (/^\d+$/.test(searchTerm)) {
-          where.OR.push({ sNo: parseInt(searchTerm) });
+          searchConditions.push({ sNo: parseInt(searchTerm) });
         }
         
-        console.log('Search where clause:', JSON.stringify(where));
+        where = { OR: searchConditions };
+        
+        console.log('Enhanced search where clause with', searchConditions.length, 'conditions');
       } else {
         console.log('Search term too short or contains invalid characters:', searchTerm);
       }

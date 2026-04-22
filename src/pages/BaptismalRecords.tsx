@@ -137,16 +137,29 @@ export default function BaptismalRecords() {
         {/* Search */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-8">
           <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="text"
-                placeholder="Search by name, surname, or parents' names..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200"
-              />
+            <div className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <input
+                  type="text"
+                  placeholder="Search by full name (e.g., GEORGENA NGOZICHUKWUKA ONU)..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+                <span className="bg-blue-50 px-2 py-1 rounded-full">
+                  <strong>Tip:</strong> Try full names like "GEORGENA NGOZICHUKWUKA ONU"
+                </span>
+                <span className="bg-green-50 px-2 py-1 rounded-full">
+                  Works with: First name, Last name, or complete full name
+                </span>
+                <span className="bg-purple-50 px-2 py-1 rounded-full">
+                  Also searches: Parents' names and S/No
+                </span>
+              </div>
             </div>
             <div className="flex gap-3">
               <button

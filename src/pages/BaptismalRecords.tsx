@@ -6,6 +6,7 @@ export default function BaptismalRecords() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
@@ -80,6 +81,23 @@ export default function BaptismalRecords() {
     });
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+    setCurrentPage(1);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
 
   if (loading && records.length === 0) {
@@ -118,18 +136,35 @@ export default function BaptismalRecords() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-8">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search by name, surname, or parents' names..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200"
-            />
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search by name, surname, or parents' names..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSearch}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md font-medium"
+              >
+                <Search className="h-5 w-5" />
+                Search Records
+              </button>
+              {searchInput && (
+                <button
+                  onClick={clearSearch}
+                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

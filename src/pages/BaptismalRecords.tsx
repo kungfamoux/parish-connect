@@ -150,9 +150,6 @@ export default function BaptismalRecords() {
                 />
               </div>
               <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                <span className="bg-blue-50 px-2 py-1 rounded-full">
-                  <strong>Tip:</strong> Try full names like "GEORGENA NGOZICHUKWUKA ONU"
-                </span>
                 <span className="bg-green-50 px-2 py-1 rounded-full">
                   Works with: First name, Last name, or complete full name
                 </span>

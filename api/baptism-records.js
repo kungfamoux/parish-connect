@@ -15,48 +15,117 @@ export default async (req, res) => {
     return;
   }
 
-  // Handle POST request for initializing pastoral council data
+  // Handle POST request for creating new baptismal records
   if (req.method === 'POST') {
     let prisma;
     try {
-      // Initialize Prisma client
-      const { PrismaClient } = await import('@prisma/client');
-      prisma = new PrismaClient({
-        accelerateUrl: process.env.DATABASE_URL,
-        log: ['info', 'warn', 'error'],
-      });
+      // Check if this is a baptismal record creation (has baptismal record fields)
+      const body = req.body;
+      if (body && body.baptismName) {
+        // Initialize Prisma client
+        const { PrismaClient } = await import('@prisma/client');
+        prisma = new PrismaClient({
+          accelerateUrl: process.env.DATABASE_URL,
+          log: ['info', 'warn', 'error'],
+        });
 
-      await prisma.$connect();
+        await prisma.$connect();
 
-      const councilMembers = [
-        { sNo: 1, name: "Very Rev. Msgr. A. Anijielo", zone: null, position: "Parish Priest Chairman" },
-        { sNo: 2, name: "Rev. Fr. Chinoso Odoh", zone: null, position: "Vicar Member" },
-        { sNo: 3, name: "Dr Ifendu Ohabuike", zone: null, position: "DDL Member" },
-        { sNo: 4, name: "Mr Paul Agu", zone: "Zone 12", position: "1st Vice Chairman" },
-        { sNo: 5, name: "Chief (Sir) O.O. Apiakason", zone: "Zone 1", position: "2nd Vice Chairman" },
-        { sNo: 6, name: "Dr Ifeanyi Ugwu", zone: "Zone 8", position: "Secretary" },
-        { sNo: 7, name: "Mrs Rose Ozodiegwu", zone: "Zone 7", position: "Asst. Secretary" },
-        { sNo: 8, name: "Chief Mrs. J. I. Obi", zone: "Zone 11", position: "Fin. Secretary" },
-        { sNo: 9, name: "Amb. Paulinus Eze", zone: "Zone 3", position: "Treasurer" },
-        { sNo: 10, name: "Mr Emmanuel Chime", zone: "Zone 13", position: "P.R.O" }
-      ];
+        // Validate required fields
+        const requiredFields = ['baptismName', 'surname'];
+        const missingFields = requiredFields.filter(field => !body[field] || body[field].trim() === '');
+        
+        if (missingFields.length > 0) {
+          res.status(400).json({ 
+            error: 'Missing required fields', 
+            missingFields 
+          });
+          return;
+        }
 
-      const result = await prisma.parishPastoralCouncil.createMany({
-        data: councilMembers,
-        skipDuplicates: true,
-      });
+        // Get next serial number
+        const lastRecord = await prisma.baptismRecord.findFirst({
+          orderBy: { sNo: 'desc' }
+        });
+        
+        const nextSNo = lastRecord ? lastRecord.sNo + 1 : 1;
 
-      console.log('Inserted pastoral council members:', result.count);
+        // Create new baptismal record
+        const newRecord = await prisma.baptismRecord.create({
+          data: {
+            sNo: nextSNo,
+            baptismName: body.baptismName.trim(),
+            surname: body.surname.trim(),
+            otherName: body.otherName?.trim() || null,
+            dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
+            dateOfBaptism: body.dateOfBaptism ? new Date(body.dateOfBaptism) : null,
+            placeOfBaptism: body.placeOfBaptism?.trim() || null,
+            nameOfMinister: body.nameOfMinister?.trim() || null,
+            nameOfGodParents: body.nameOfGodParents?.trim() || null,
+            solemnOrPrivate: body.solemnOrPrivate?.trim() || null,
+            fathersName: body.fathersName?.trim() || null,
+            mothersName: body.mothersName?.trim() || null,
+            homeTown: body.homeTown?.trim() || null,
+            firstHolyCommunionDate: body.firstHolyCommunionDate ? new Date(body.firstHolyCommunionDate) : null,
+            firstHolyCommunionPlace: body.firstHolyCommunionPlace?.trim() || null,
+            confirmationDate: body.confirmationDate ? new Date(body.confirmationDate) : null,
+            confirmationPlace: body.confirmationPlace?.trim() || null,
+            marriageDate: body.marriageDate ? new Date(body.marriageDate) : null,
+            marriagePartnerName: body.marriagePartnerName?.trim() || null,
+            marriagePlace: body.marriagePlace?.trim() || null,
+            dateOfDeath: body.dateOfDeath ? new Date(body.dateOfDeath) : null,
+            remarks: body.remarks?.trim() || null,
+          }
+        });
 
-      res.status(201).json({
-        message: 'Pastoral council members initialized successfully',
-        inserted: result.count
-      });
+        console.log('Created new baptismal record:', newRecord.id);
+
+        res.status(201).json({
+          message: 'Baptismal record created successfully',
+          record: newRecord
+        });
+
+      } else {
+        // Handle pastoral council initialization (existing code)
+        // Initialize Prisma client
+        const { PrismaClient } = await import('@prisma/client');
+        prisma = new PrismaClient({
+          accelerateUrl: process.env.DATABASE_URL,
+          log: ['info', 'warn', 'error'],
+        });
+
+        await prisma.$connect();
+
+        const councilMembers = [
+          { sNo: 1, name: "Very Rev. Msgr. A. Anijielo", zone: null, position: "Parish Priest Chairman" },
+          { sNo: 2, name: "Rev. Fr. Chinoso Odoh", zone: null, position: "Vicar Member" },
+          { sNo: 3, name: "Dr Ifendu Ohabuike", zone: null, position: "DDL Member" },
+          { sNo: 4, name: "Mr Paul Agu", zone: "Zone 12", position: "1st Vice Chairman" },
+          { sNo: 5, name: "Chief (Sir) O.O. Apiakason", zone: "Zone 1", position: "2nd Vice Chairman" },
+          { sNo: 6, name: "Dr Ifeanyi Ugwu", zone: "Zone 8", position: "Secretary" },
+          { sNo: 7, name: "Mrs Rose Ozodiegwu", zone: "Zone 7", position: "Asst. Secretary" },
+          { sNo: 8, name: "Chief Mrs. J. I. Obi", zone: "Zone 11", position: "Fin. Secretary" },
+          { sNo: 9, name: "Amb. Paulinus Eze", zone: "Zone 3", position: "Treasurer" },
+          { sNo: 10, name: "Mr Emmanuel Chime", zone: "Zone 13", position: "P.R.O" }
+        ];
+
+        const result = await prisma.parishPastoralCouncil.createMany({
+          data: councilMembers,
+          skipDuplicates: true,
+        });
+
+        console.log('Inserted pastoral council members:', result.count);
+
+        res.status(201).json({
+          message: 'Pastoral council members initialized successfully',
+          inserted: result.count
+        });
+      }
 
     } catch (error) {
-      console.error('Pastoral council initialization error:', error);
+      console.error('POST request error:', error);
       res.status(500).json({ 
-        error: 'Failed to initialize pastoral council',
+        error: 'Failed to process POST request',
         message: error.message
       });
     } finally {

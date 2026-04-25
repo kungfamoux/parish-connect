@@ -42,15 +42,14 @@ export default async (req, res) => {
 
     const { type = 'overview', year, month } = req.query;
 
-    // Get total records count
+    // Get total records count - count all records with at least a baptism name
     const totalRecords = await prisma.baptismRecord.count({
       where: {
-        baptismName: { not: null },
-        surname: { not: null }
+        baptismName: { not: null }
       }
     });
 
-    // Get records by year
+    // Get records by year - count all records with baptism dates
     let recordsByYear = [];
     try {
       recordsByYear = await prisma.$queryRaw`
@@ -59,8 +58,7 @@ export default async (req, res) => {
           COUNT(*) as count
         FROM "baptism_records" 
         WHERE "DATE_OF_BAPTISM" IS NOT NULL 
-          AND "BAPTISM_NAME" IS NOT NULL 
-          AND "SURNAME" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL
         GROUP BY EXTRACT(YEAR FROM "DATE_OF_BAPTISM")
         ORDER BY year DESC
         LIMIT 10
@@ -81,8 +79,7 @@ export default async (req, res) => {
         FROM "baptism_records" 
         WHERE "DATE_OF_BAPTISM" IS NOT NULL 
           AND EXTRACT(YEAR FROM "DATE_OF_BAPTISM") = ${currentYear}
-          AND "BAPTISM_NAME" IS NOT NULL 
-          AND "SURNAME" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL
         GROUP BY EXTRACT(MONTH FROM "DATE_OF_BAPTISM")
         ORDER BY month
       `;
@@ -100,8 +97,7 @@ export default async (req, res) => {
           COUNT(*) as count
         FROM "baptism_records" 
         WHERE "SOLEMN_OR_PRIVATE" IS NOT NULL
-          AND "BAPTISM_NAME" IS NOT NULL 
-          AND "SURNAME" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL
         GROUP BY "SOLEMN_OR_PRIVATE"
       `;
     } catch (error) {
@@ -119,8 +115,7 @@ export default async (req, res) => {
         FROM "baptism_records" 
         WHERE "HOME_TOWN" IS NOT NULL 
           AND "HOME_TOWN" != ''
-          AND "BAPTISM_NAME" IS NOT NULL 
-          AND "SURNAME" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL
         GROUP BY "HOME_TOWN"
         ORDER BY count DESC
         LIMIT 10
@@ -140,8 +135,7 @@ export default async (req, res) => {
         FROM "baptism_records" 
         WHERE "PLACE_OF_BAPTISM" IS NOT NULL 
           AND "PLACE_OF_BAPTISM" != ''
-          AND "BAPTISM_NAME" IS NOT NULL 
-          AND "SURNAME" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL
         GROUP BY "PLACE_OF_BAPTISM"
         ORDER BY count DESC
         LIMIT 10
@@ -161,8 +155,7 @@ export default async (req, res) => {
         FROM "baptism_records" 
         WHERE "DATE_OF_BAPTISM" >= NOW() - INTERVAL '6 months'
           AND "DATE_OF_BAPTISM" IS NOT NULL
-          AND "BAPTISM_NAME" IS NOT NULL 
-          AND "SURNAME" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL
         GROUP BY DATE_TRUNC('month', "DATE_OF_BAPTISM")
         ORDER BY month DESC
       `;
@@ -181,8 +174,7 @@ export default async (req, res) => {
         FROM "baptism_records" 
         WHERE "NAME_OF_MINISTER" IS NOT NULL 
           AND "NAME_OF_MINISTER" != ''
-          AND "BAPTISM_NAME" IS NOT NULL 
-          AND "SURNAME" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL
         GROUP BY "NAME_OF_MINISTER"
         ORDER BY count DESC
         LIMIT 10

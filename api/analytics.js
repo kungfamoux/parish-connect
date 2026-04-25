@@ -205,15 +205,45 @@ export default async (req, res) => {
       privateBaptisms: ceremonyTypeStats.find(s => s.SOLEMN_OR_PRIVATE === 'PRIVATE')?.count || 0,
     };
 
+    // Convert all BigInt values to regular numbers
+    const safeConvertNumber = (value) => {
+      if (typeof value === 'bigint') {
+        return Number(value);
+      }
+      return Number(value) || 0;
+    };
+
     const response = {
       success: true,
       data: {
-        overview: demographics,
-        recordsByYear: recordsByYear.map(r => ({ year: Number(r.year), count: Number(r.count) })),
-        recordsByMonth: recordsByMonth.map(r => ({ month: Number(r.month), count: Number(r.count) })),
-        ceremonyTypeStats: ceremonyTypeStats.map(s => ({ type: s.SOLEMN_OR_PRIVATE, count: Number(s.count) })),
-        topHomeTowns: topHomeTowns.map(t => ({ homeTown: t.HOME_TOWN, count: Number(t.count) })),
-        topBaptismPlaces: topBaptismPlaces.map(p => ({ place: p.PLACE_OF_BAPTISM, count: Number(p.count) })),
+        overview: {
+          ...demographics,
+          totalRecords: safeConvertNumber(demographics.totalRecords),
+          averagePerYear: safeConvertNumber(demographics.averagePerYear),
+          currentYearTotal: safeConvertNumber(demographics.currentYearTotal),
+          solemnBaptisms: safeConvertNumber(demographics.solemnBaptisms),
+          privateBaptisms: safeConvertNumber(demographics.privateBaptisms),
+        },
+        recordsByYear: recordsByYear.map(r => ({ 
+          year: safeConvertNumber(r.year), 
+          count: safeConvertNumber(r.count) 
+        })),
+        recordsByMonth: recordsByMonth.map(r => ({ 
+          month: safeConvertNumber(r.month), 
+          count: safeConvertNumber(r.count) 
+        })),
+        ceremonyTypeStats: ceremonyTypeStats.map(s => ({ 
+          type: s.SOLEMN_OR_PRIVATE, 
+          count: safeConvertNumber(s.count) 
+        })),
+        topHomeTowns: topHomeTowns.map(t => ({ 
+          homeTown: t.HOME_TOWN, 
+          count: safeConvertNumber(t.count) 
+        })),
+        topBaptismPlaces: topBaptismPlaces.map(p => ({ 
+          place: p.PLACE_OF_BAPTISM, 
+          count: safeConvertNumber(p.count) 
+        })),
         recentTrends: recentTrends.map(t => { 
           try {
             const date = new Date(t.month);
@@ -223,14 +253,17 @@ export default async (req, res) => {
             }
             return {
               month: date.toISOString(), 
-              count: Number(t.count) 
+              count: safeConvertNumber(t.count) 
             };
           } catch (error) {
             console.error('Error converting date:', t.month, error);
             return null;
           }
         }).filter(t => t !== null),
-        ministerStats: ministerStats.map(m => ({ minister: m.NAME_OF_MINISTER, count: Number(m.count) })),
+        ministerStats: ministerStats.map(m => ({ 
+          minister: m.NAME_OF_MINISTER, 
+          count: safeConvertNumber(m.count) 
+        })),
       }
     };
 

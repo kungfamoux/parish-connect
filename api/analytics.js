@@ -51,104 +51,146 @@ export default async (req, res) => {
     });
 
     // Get records by year
-    const recordsByYear = await prisma.$queryRaw`
-      SELECT 
-        EXTRACT(YEAR FROM "DATE_OF_BAPTISM") as year,
-        COUNT(*) as count
-      FROM "baptism_records" 
-      WHERE "DATE_OF_BAPTISM" IS NOT NULL 
-        AND "BAPTISM_NAME" IS NOT NULL 
-        AND "SURNAME" IS NOT NULL
-      GROUP BY EXTRACT(YEAR FROM "DATE_OF_BAPTISM")
-      ORDER BY year DESC
-      LIMIT 10
-    `;
+    let recordsByYear = [];
+    try {
+      recordsByYear = await prisma.$queryRaw`
+        SELECT 
+          EXTRACT(YEAR FROM "DATE_OF_BAPTISM") as year,
+          COUNT(*) as count
+        FROM "baptism_records" 
+        WHERE "DATE_OF_BAPTISM" IS NOT NULL 
+          AND "BAPTISM_NAME" IS NOT NULL 
+          AND "SURNAME" IS NOT NULL
+        GROUP BY EXTRACT(YEAR FROM "DATE_OF_BAPTISM")
+        ORDER BY year DESC
+        LIMIT 10
+      `;
+    } catch (error) {
+      console.error('Error fetching records by year:', error);
+      recordsByYear = [];
+    }
 
     // Get records by month for current year
-    const currentYear = new Date().getFullYear();
-    const recordsByMonth = await prisma.$queryRaw`
-      SELECT 
-        EXTRACT(MONTH FROM "DATE_OF_BAPTISM") as month,
-        COUNT(*) as count
-      FROM "baptism_records" 
-      WHERE "DATE_OF_BAPTISM" IS NOT NULL 
-        AND EXTRACT(YEAR FROM "DATE_OF_BAPTISM") = ${currentYear}
-        AND "BAPTISM_NAME" IS NOT NULL 
-        AND "SURNAME" IS NOT NULL
-      GROUP BY EXTRACT(MONTH FROM "DATE_OF_BAPTISM")
-      ORDER BY month
-    `;
+    let recordsByMonth = [];
+    try {
+      const currentYear = new Date().getFullYear();
+      recordsByMonth = await prisma.$queryRaw`
+        SELECT 
+          EXTRACT(MONTH FROM "DATE_OF_BAPTISM") as month,
+          COUNT(*) as count
+        FROM "baptism_records" 
+        WHERE "DATE_OF_BAPTISM" IS NOT NULL 
+          AND EXTRACT(YEAR FROM "DATE_OF_BAPTISM") = ${currentYear}
+          AND "BAPTISM_NAME" IS NOT NULL 
+          AND "SURNAME" IS NOT NULL
+        GROUP BY EXTRACT(MONTH FROM "DATE_OF_BAPTISM")
+        ORDER BY month
+      `;
+    } catch (error) {
+      console.error('Error fetching records by month:', error);
+      recordsByMonth = [];
+    }
 
     // Get solemn vs private statistics
-    const ceremonyTypeStats = await prisma.$queryRaw`
-      SELECT 
-        "SOLEMN_OR_PRIVATE",
-        COUNT(*) as count
-      FROM "baptism_records" 
-      WHERE "SOLEMN_OR_PRIVATE" IS NOT NULL
-        AND "BAPTISM_NAME" IS NOT NULL 
-        AND "SURNAME" IS NOT NULL
-      GROUP BY "SOLEMN_OR_PRIVATE"
-    `;
+    let ceremonyTypeStats = [];
+    try {
+      ceremonyTypeStats = await prisma.$queryRaw`
+        SELECT 
+          "SOLEMN_OR_PRIVATE",
+          COUNT(*) as count
+        FROM "baptism_records" 
+        WHERE "SOLEMN_OR_PRIVATE" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL 
+          AND "SURNAME" IS NOT NULL
+        GROUP BY "SOLEMN_OR_PRIVATE"
+      `;
+    } catch (error) {
+      console.error('Error fetching ceremony type stats:', error);
+      ceremonyTypeStats = [];
+    }
 
     // Get top home towns
-    const topHomeTowns = await prisma.$queryRaw`
-      SELECT 
-        "HOME_TOWN",
-        COUNT(*) as count
-      FROM "baptism_records" 
-      WHERE "HOME_TOWN" IS NOT NULL 
-        AND "HOME_TOWN" != ''
-        AND "BAPTISM_NAME" IS NOT NULL 
-        AND "SURNAME" IS NOT NULL
-      GROUP BY "HOME_TOWN"
-      ORDER BY count DESC
-      LIMIT 10
-    `;
+    let topHomeTowns = [];
+    try {
+      topHomeTowns = await prisma.$queryRaw`
+        SELECT 
+          "HOME_TOWN",
+          COUNT(*) as count
+        FROM "baptism_records" 
+        WHERE "HOME_TOWN" IS NOT NULL 
+          AND "HOME_TOWN" != ''
+          AND "BAPTISM_NAME" IS NOT NULL 
+          AND "SURNAME" IS NOT NULL
+        GROUP BY "HOME_TOWN"
+        ORDER BY count DESC
+        LIMIT 10
+      `;
+    } catch (error) {
+      console.error('Error fetching top home towns:', error);
+      topHomeTowns = [];
+    }
 
     // Get top baptism places
-    const topBaptismPlaces = await prisma.$queryRaw`
-      SELECT 
-        "PLACE_OF_BAPTISM",
-        COUNT(*) as count
-      FROM "baptism_records" 
-      WHERE "PLACE_OF_BAPTISM" IS NOT NULL 
-        AND "PLACE_OF_BAPTISM" != ''
-        AND "BAPTISM_NAME" IS NOT NULL 
-        AND "SURNAME" IS NOT NULL
-      GROUP BY "PLACE_OF_BAPTISM"
-      ORDER BY count DESC
-      LIMIT 10
-    `;
+    let topBaptismPlaces = [];
+    try {
+      topBaptismPlaces = await prisma.$queryRaw`
+        SELECT 
+          "PLACE_OF_BAPTISM",
+          COUNT(*) as count
+        FROM "baptism_records" 
+        WHERE "PLACE_OF_BAPTISM" IS NOT NULL 
+          AND "PLACE_OF_BAPTISM" != ''
+          AND "BAPTISM_NAME" IS NOT NULL 
+          AND "SURNAME" IS NOT NULL
+        GROUP BY "PLACE_OF_BAPTISM"
+        ORDER BY count DESC
+        LIMIT 10
+      `;
+    } catch (error) {
+      console.error('Error fetching top baptism places:', error);
+      topBaptismPlaces = [];
+    }
 
     // Get recent trends (last 6 months)
-    const recentTrends = await prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC('month', "DATE_OF_BAPTISM") as month,
-        COUNT(*) as count
-      FROM "baptism_records" 
-      WHERE "DATE_OF_BAPTISM" >= NOW() - INTERVAL '6 months'
-        AND "DATE_OF_BAPTISM" IS NOT NULL
-        AND "BAPTISM_NAME" IS NOT NULL 
-        AND "SURNAME" IS NOT NULL
-      GROUP BY DATE_TRUNC('month', "DATE_OF_BAPTISM")
-      ORDER BY month DESC
-    `;
+    let recentTrends = [];
+    try {
+      recentTrends = await prisma.$queryRaw`
+        SELECT 
+          DATE_TRUNC('month', "DATE_OF_BAPTISM") as month,
+          COUNT(*) as count
+        FROM "baptism_records" 
+        WHERE "DATE_OF_BAPTISM" >= NOW() - INTERVAL '6 months'
+          AND "DATE_OF_BAPTISM" IS NOT NULL
+          AND "BAPTISM_NAME" IS NOT NULL 
+          AND "SURNAME" IS NOT NULL
+        GROUP BY DATE_TRUNC('month', "DATE_OF_BAPTISM")
+        ORDER BY month DESC
+      `;
+    } catch (error) {
+      console.error('Error fetching recent trends:', error);
+      recentTrends = [];
+    }
 
     // Get minister statistics
-    const ministerStats = await prisma.$queryRaw`
-      SELECT 
-        "NAME_OF_MINISTER",
-        COUNT(*) as count
-      FROM "baptism_records" 
-      WHERE "NAME_OF_MINISTER" IS NOT NULL 
-        AND "NAME_OF_MINISTER" != ''
-        AND "BAPTISM_NAME" IS NOT NULL 
-        AND "SURNAME" IS NOT NULL
-      GROUP BY "NAME_OF_MINISTER"
-      ORDER BY count DESC
-      LIMIT 10
-    `;
+    let ministerStats = [];
+    try {
+      ministerStats = await prisma.$queryRaw`
+        SELECT 
+          "NAME_OF_MINISTER",
+          COUNT(*) as count
+        FROM "baptism_records" 
+        WHERE "NAME_OF_MINISTER" IS NOT NULL 
+          AND "NAME_OF_MINISTER" != ''
+          AND "BAPTISM_NAME" IS NOT NULL 
+          AND "SURNAME" IS NOT NULL
+        GROUP BY "NAME_OF_MINISTER"
+        ORDER BY count DESC
+        LIMIT 10
+      `;
+    } catch (error) {
+      console.error('Error fetching minister stats:', error);
+      ministerStats = [];
+    }
 
     // Get demographic insights
     const demographics = {
@@ -173,9 +215,9 @@ export default async (req, res) => {
         topHomeTowns: topHomeTowns.map(t => ({ homeTown: t.HOME_TOWN, count: Number(t.count) })),
         topBaptismPlaces: topBaptismPlaces.map(p => ({ place: p.PLACE_OF_BAPTISM, count: Number(p.count) })),
         recentTrends: recentTrends.map(t => ({ 
-          month: new Date(t.month).toISOString(), 
+          month: t.month ? new Date(t.month).toISOString() : null, 
           count: Number(t.count) 
-        })),
+        })).filter(t => t.month !== null),
         ministerStats: ministerStats.map(m => ({ minister: m.NAME_OF_MINISTER, count: Number(m.count) })),
       }
     };

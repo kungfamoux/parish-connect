@@ -214,10 +214,22 @@ export default async (req, res) => {
         ceremonyTypeStats: ceremonyTypeStats.map(s => ({ type: s.SOLEMN_OR_PRIVATE, count: Number(s.count) })),
         topHomeTowns: topHomeTowns.map(t => ({ homeTown: t.HOME_TOWN, count: Number(t.count) })),
         topBaptismPlaces: topBaptismPlaces.map(p => ({ place: p.PLACE_OF_BAPTISM, count: Number(p.count) })),
-        recentTrends: recentTrends.map(t => ({ 
-          month: t.month ? new Date(t.month).toISOString() : null, 
-          count: Number(t.count) 
-        })).filter(t => t.month !== null),
+        recentTrends: recentTrends.map(t => { 
+          try {
+            const date = new Date(t.month);
+            // Check if the date is valid
+            if (isNaN(date.getTime())) {
+              return null;
+            }
+            return {
+              month: date.toISOString(), 
+              count: Number(t.count) 
+            };
+          } catch (error) {
+            console.error('Error converting date:', t.month, error);
+            return null;
+          }
+        }).filter(t => t !== null),
         ministerStats: ministerStats.map(m => ({ minister: m.NAME_OF_MINISTER, count: Number(m.count) })),
       }
     };

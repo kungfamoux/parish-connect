@@ -34,6 +34,8 @@ import PastoralCouncil from "./pages/PastoralCouncil";
 
 import AdminBaptismalRecords from "./pages/AdminBaptismalRecords";
 
+import AdminAnalytics from "./pages/AdminAnalytics";
+
 import NotFound from "./pages/NotFound";
 
 
@@ -79,6 +81,8 @@ const App = () => (
           <Route path="/pastoral-council" element={<PastoralCouncil />} />
 
           <Route path="/admin/baptismal-records" element={<AdminBaptismalRecords />} />
+
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
 
           <Route path="*" element={<NotFound />} />
 

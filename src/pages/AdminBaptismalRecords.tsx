@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, AlertTriangle, Database, Users, RefreshCw, Shield, Eye, Loader2, Plus, X, Calendar, User as UserIcon, MapPin, Church, Edit } from 'lucide-react';
+import { Search, Trash2, AlertTriangle, Database, Users, RefreshCw, Shield, Eye, Loader2, Plus, X, Calendar, User as UserIcon, MapPin, Church, Edit, BarChart3 } from 'lucide-react';
 
 export default function AdminBaptismalRecords() {
   const [records, setRecords] = useState<any[]>([]);
@@ -358,6 +358,28 @@ export default function AdminBaptismalRecords() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Admin Navigation */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 mb-8">
+          <div className="flex flex-wrap gap-4">
+            <a
+              href="/admin/baptismal-records"
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <Database className="h-4 w-4" />
+              Records Management
+            </a>
+            <a
+              href="/admin/analytics"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Analytics Dashboard
+            </a>
           </div>
         </div>
       </div>

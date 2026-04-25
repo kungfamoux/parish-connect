@@ -53,13 +53,13 @@ export default async (req, res) => {
     // Get records by year
     const recordsByYear = await prisma.$queryRaw`
       SELECT 
-        EXTRACT(YEAR FROM "dateOfBaptism") as year,
+        EXTRACT(YEAR FROM "DATE_OF_BAPTISM") as year,
         COUNT(*) as count
       FROM "baptism_records" 
-      WHERE "dateOfBaptism" IS NOT NULL 
-        AND "baptismName" IS NOT NULL 
-        AND "surname" IS NOT NULL
-      GROUP BY EXTRACT(YEAR FROM "dateOfBaptism")
+      WHERE "DATE_OF_BAPTISM" IS NOT NULL 
+        AND "BAPTISM_NAME" IS NOT NULL 
+        AND "SURNAME" IS NOT NULL
+      GROUP BY EXTRACT(YEAR FROM "DATE_OF_BAPTISM")
       ORDER BY year DESC
       LIMIT 10
     `;
@@ -68,40 +68,40 @@ export default async (req, res) => {
     const currentYear = new Date().getFullYear();
     const recordsByMonth = await prisma.$queryRaw`
       SELECT 
-        EXTRACT(MONTH FROM "dateOfBaptism") as month,
+        EXTRACT(MONTH FROM "DATE_OF_BAPTISM") as month,
         COUNT(*) as count
       FROM "baptism_records" 
-      WHERE "dateOfBaptism" IS NOT NULL 
-        AND EXTRACT(YEAR FROM "dateOfBaptism") = ${currentYear}
-        AND "baptismName" IS NOT NULL 
-        AND "surname" IS NOT NULL
-      GROUP BY EXTRACT(MONTH FROM "dateOfBaptism")
+      WHERE "DATE_OF_BAPTISM" IS NOT NULL 
+        AND EXTRACT(YEAR FROM "DATE_OF_BAPTISM") = ${currentYear}
+        AND "BAPTISM_NAME" IS NOT NULL 
+        AND "SURNAME" IS NOT NULL
+      GROUP BY EXTRACT(MONTH FROM "DATE_OF_BAPTISM")
       ORDER BY month
     `;
 
     // Get solemn vs private statistics
     const ceremonyTypeStats = await prisma.$queryRaw`
       SELECT 
-        "solemnOrPrivate",
+        "SOLEMN_OR_PRIVATE",
         COUNT(*) as count
       FROM "baptism_records" 
-      WHERE "solemnOrPrivate" IS NOT NULL
-        AND "baptismName" IS NOT NULL 
-        AND "surname" IS NOT NULL
-      GROUP BY "solemnOrPrivate"
+      WHERE "SOLEMN_OR_PRIVATE" IS NOT NULL
+        AND "BAPTISM_NAME" IS NOT NULL 
+        AND "SURNAME" IS NOT NULL
+      GROUP BY "SOLEMN_OR_PRIVATE"
     `;
 
     // Get top home towns
     const topHomeTowns = await prisma.$queryRaw`
       SELECT 
-        "homeTown",
+        "HOME_TOWN",
         COUNT(*) as count
       FROM "baptism_records" 
-      WHERE "homeTown" IS NOT NULL 
-        AND "homeTown" != ''
-        AND "baptismName" IS NOT NULL 
-        AND "surname" IS NOT NULL
-      GROUP BY "homeTown"
+      WHERE "HOME_TOWN" IS NOT NULL 
+        AND "HOME_TOWN" != ''
+        AND "BAPTISM_NAME" IS NOT NULL 
+        AND "SURNAME" IS NOT NULL
+      GROUP BY "HOME_TOWN"
       ORDER BY count DESC
       LIMIT 10
     `;
@@ -109,14 +109,14 @@ export default async (req, res) => {
     // Get top baptism places
     const topBaptismPlaces = await prisma.$queryRaw`
       SELECT 
-        "placeOfBaptism",
+        "PLACE_OF_BAPTISM",
         COUNT(*) as count
       FROM "baptism_records" 
-      WHERE "placeOfBaptism" IS NOT NULL 
-        AND "placeOfBaptism" != ''
-        AND "baptismName" IS NOT NULL 
-        AND "surname" IS NOT NULL
-      GROUP BY "placeOfBaptism"
+      WHERE "PLACE_OF_BAPTISM" IS NOT NULL 
+        AND "PLACE_OF_BAPTISM" != ''
+        AND "BAPTISM_NAME" IS NOT NULL 
+        AND "SURNAME" IS NOT NULL
+      GROUP BY "PLACE_OF_BAPTISM"
       ORDER BY count DESC
       LIMIT 10
     `;
@@ -124,28 +124,28 @@ export default async (req, res) => {
     // Get recent trends (last 6 months)
     const recentTrends = await prisma.$queryRaw`
       SELECT 
-        DATE_TRUNC('month', "dateOfBaptism") as month,
+        DATE_TRUNC('month', "DATE_OF_BAPTISM") as month,
         COUNT(*) as count
       FROM "baptism_records" 
-      WHERE "dateOfBaptism" >= NOW() - INTERVAL '6 months'
-        AND "dateOfBaptism" IS NOT NULL
-        AND "baptismName" IS NOT NULL 
-        AND "surname" IS NOT NULL
-      GROUP BY DATE_TRUNC('month', "dateOfBaptism")
+      WHERE "DATE_OF_BAPTISM" >= NOW() - INTERVAL '6 months'
+        AND "DATE_OF_BAPTISM" IS NOT NULL
+        AND "BAPTISM_NAME" IS NOT NULL 
+        AND "SURNAME" IS NOT NULL
+      GROUP BY DATE_TRUNC('month', "DATE_OF_BAPTISM")
       ORDER BY month DESC
     `;
 
     // Get minister statistics
     const ministerStats = await prisma.$queryRaw`
       SELECT 
-        "nameOfMinister",
+        "NAME_OF_MINISTER",
         COUNT(*) as count
       FROM "baptism_records" 
-      WHERE "nameOfMinister" IS NOT NULL 
-        AND "nameOfMinister" != ''
-        AND "baptismName" IS NOT NULL 
-        AND "surname" IS NOT NULL
-      GROUP BY "nameOfMinister"
+      WHERE "NAME_OF_MINISTER" IS NOT NULL 
+        AND "NAME_OF_MINISTER" != ''
+        AND "BAPTISM_NAME" IS NOT NULL 
+        AND "SURNAME" IS NOT NULL
+      GROUP BY "NAME_OF_MINISTER"
       ORDER BY count DESC
       LIMIT 10
     `;
@@ -157,10 +157,10 @@ export default async (req, res) => {
         ? Math.round(recordsByYear.reduce((sum, year) => sum + Number(year.count), 0) / recordsByYear.length)
         : 0,
       currentYearTotal: recordsByMonth.reduce((sum, month) => sum + Number(month.count), 0),
-      topHomeTown: topHomeTowns.length > 0 ? topHomeTowns[0].homeTown : 'N/A',
-      topBaptismPlace: topBaptismPlaces.length > 0 ? topBaptismPlaces[0].placeOfBaptism : 'N/A',
-      solemnBaptisms: ceremonyTypeStats.find(s => s.solemnOrPrivate === 'SOLEMN')?.count || 0,
-      privateBaptisms: ceremonyTypeStats.find(s => s.solemnOrPrivate === 'PRIVATE')?.count || 0,
+      topHomeTown: topHomeTowns.length > 0 ? topHomeTowns[0].HOME_TOWN : 'N/A',
+      topBaptismPlace: topBaptismPlaces.length > 0 ? topBaptismPlaces[0].PLACE_OF_BAPTISM : 'N/A',
+      solemnBaptisms: ceremonyTypeStats.find(s => s.SOLEMN_OR_PRIVATE === 'SOLEMN')?.count || 0,
+      privateBaptisms: ceremonyTypeStats.find(s => s.SOLEMN_OR_PRIVATE === 'PRIVATE')?.count || 0,
     };
 
     const response = {
@@ -169,14 +169,14 @@ export default async (req, res) => {
         overview: demographics,
         recordsByYear: recordsByYear.map(r => ({ year: Number(r.year), count: Number(r.count) })),
         recordsByMonth: recordsByMonth.map(r => ({ month: Number(r.month), count: Number(r.count) })),
-        ceremonyTypeStats: ceremonyTypeStats.map(s => ({ type: s.solemnOrPrivate, count: Number(s.count) })),
-        topHomeTowns: topHomeTowns.map(t => ({ homeTown: t.homeTown, count: Number(t.count) })),
-        topBaptismPlaces: topBaptismPlaces.map(p => ({ place: p.placeOfBaptism, count: Number(p.count) })),
+        ceremonyTypeStats: ceremonyTypeStats.map(s => ({ type: s.SOLEMN_OR_PRIVATE, count: Number(s.count) })),
+        topHomeTowns: topHomeTowns.map(t => ({ homeTown: t.HOME_TOWN, count: Number(t.count) })),
+        topBaptismPlaces: topBaptismPlaces.map(p => ({ place: p.PLACE_OF_BAPTISM, count: Number(p.count) })),
         recentTrends: recentTrends.map(t => ({ 
           month: new Date(t.month).toISOString(), 
           count: Number(t.count) 
         })),
-        ministerStats: ministerStats.map(m => ({ minister: m.nameOfMinister, count: Number(m.count) })),
+        ministerStats: ministerStats.map(m => ({ minister: m.NAME_OF_MINISTER, count: Number(m.count) })),
       }
     };
 

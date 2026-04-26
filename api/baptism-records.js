@@ -501,18 +501,47 @@ export default async (req, res) => {
         take: recordsPerPage
       });
 
-      console.log(`Found ${records.length} records out of ${totalRecords} total`);
+      // Ensure records is an array and handle null/undefined values
+      const safeRecords = (records || []).map(record => ({
+        ...record,
+        // Ensure date fields are properly formatted
+        dateOfBirth: record.dateOfBirth ? record.dateOfBirth.toISOString().split('T')[0] : null,
+        dateOfBaptism: record.dateOfBaptism ? record.dateOfBaptism.toISOString().split('T')[0] : null,
+        firstHolyCommunionDate: record.firstHolyCommunionDate ? record.firstHolyCommunionDate.toISOString().split('T')[0] : null,
+        confirmationDate: record.confirmationDate ? record.confirmationDate.toISOString().split('T')[0] : null,
+        marriageDate: record.marriageDate ? record.marriageDate.toISOString().split('T')[0] : null,
+        dateOfDeath: record.dateOfDeath ? record.dateOfDeath.toISOString().split('T')[0] : null,
+        // Ensure string fields are not null
+        baptismName: record.baptismName || '',
+        surname: record.surname || '',
+        otherName: record.otherName || '',
+        placeOfBaptism: record.placeOfBaptism || '',
+        nameOfMinister: record.nameOfMinister || '',
+        nameOfGodParents: record.nameOfGodParents || '',
+        solemnOrPrivate: record.solemnOrPrivate || '',
+        fathersName: record.fathersName || '',
+        mothersName: record.mothersName || '',
+        homeTown: record.homeTown || '',
+        firstHolyCommunionPlace: record.firstHolyCommunionPlace || '',
+        firstHolyCommunionMinister: record.firstHolyCommunionMinister || '',
+        confirmationPlace: record.confirmationPlace || '',
+        confirmationMinister: record.confirmationMinister || '',
+        marriagePartnerName: record.marriagePartnerName || '',
+        marriagePlace: record.marriagePlace || '',
+        marriageWitnesses: record.marriageWitnesses || '',
+        marriageMinister: record.marriageMinister || '',
+        remarks: record.remarks || ''
+      }));
+
+      console.log(`Found ${safeRecords.length} records out of ${totalRecords} total`);
 
       res.status(200).json({
-        records,
-        pagination: {
-          currentPage,
-          recordsPerPage,
-          totalRecords,
-          totalPages: Math.ceil(totalRecords / recordsPerPage),
-          hasNextPage: currentPage < Math.ceil(totalRecords / recordsPerPage),
-          hasPrevPage: currentPage > 1
-        }
+        records: safeRecords,
+        total: totalRecords,
+        currentPage,
+        totalPages: Math.ceil(totalRecords / recordsPerPage),
+        hasNextPage: currentPage < Math.ceil(totalRecords / recordsPerPage),
+        hasPrevPage: currentPage > 1
       });
 
     } catch (error) {

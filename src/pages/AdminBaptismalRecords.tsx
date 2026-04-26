@@ -17,6 +17,7 @@ export default function AdminBaptismalRecords() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [formData, setFormData] = useState({
+    sNo: '',
     baptismName: '',
     surname: '',
     otherName: '',
@@ -39,6 +40,7 @@ export default function AdminBaptismalRecords() {
     dateOfDeath: '',
     remarks: ''
   });
+  const [autoGenerateSNo, setAutoGenerateSNo] = useState(true);
 
   const recordsPerPage = 50; // More records for admin view
 
@@ -173,12 +175,17 @@ export default function AdminBaptismalRecords() {
     setActionLoading(true);
     
     try {
+      // Prepare form data - include sNo only if not auto-generating
+      const submissionData = autoGenerateSNo 
+        ? { ...formData, sNo: '' } // Empty sNo for auto-generation
+        : formData; // Include manual sNo
+      
       const response = await fetch('/api/baptism-records', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submissionData)
       });
       
       if (!response.ok) {
@@ -189,8 +196,9 @@ export default function AdminBaptismalRecords() {
       const result = await response.json();
       console.log('Record created:', result);
       
-      // Reset form and close
+      // Reset form
       setFormData({
+        sNo: '',
         baptismName: '',
         surname: '',
         otherName: '',
@@ -228,6 +236,7 @@ export default function AdminBaptismalRecords() {
   const handleEdit = (record: any) => {
     setEditingRecord(record);
     setFormData({
+      sNo: record.sNo?.toString() || '',
       baptismName: record.baptismName || '',
       surname: record.surname || '',
       otherName: record.otherName || '',
@@ -276,6 +285,7 @@ export default function AdminBaptismalRecords() {
       
       // Reset form and close
       setFormData({
+        sNo: '',
         baptismName: '',
         surname: '',
         otherName: '',
@@ -769,6 +779,47 @@ export default function AdminBaptismalRecords() {
                       <UserIcon className="h-5 w-5 text-green-600" />
                       Basic Information
                     </h3>
+                    
+                    {/* S_NO Generation */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Serial Number (S/No)
+                      </label>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="autoGenerateSNo"
+                            checked={autoGenerateSNo}
+                            onChange={(e) => setAutoGenerateSNo(e.target.checked)}
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="autoGenerateSNo" className="text-sm text-gray-700">
+                            Auto-generate serial number
+                          </label>
+                        </div>
+                        {!autoGenerateSNo && (
+                          <input
+                            type="number"
+                            name="sNo"
+                            value={formData.sNo}
+                            onChange={handleInputChange}
+                            placeholder="Enter serial number manually"
+                            title="Serial number (leave empty for auto-generation)"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            min="1"
+                          />
+                        )}
+                        {autoGenerateSNo && (
+                          <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                            <span className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                              Will be automatically assigned
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">

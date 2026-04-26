@@ -46,149 +46,179 @@ export default async (req, res) => {
           return;
         }
 
-        // Generate unique serial number using sequence approach
-        let newRecord = null;
-        let attempts = 0;
-        const maxAttempts = 50;
+        // Handle S_NO - either manual or auto-generated
+        let finalSNo = null;
         
-        while (attempts < maxAttempts && !newRecord) {
-          try {
-            // Find the next available S_NO by checking for gaps
-            const result = await prisma.$transaction(async (tx) => {
-              // Get all existing S_NO values to find gaps
-              const existingRecords = await tx.baptismRecord.findMany({
-                select: { sNo: true },
-                orderBy: { sNo: 'asc' }
-              });
-              
-              const existingSNos = existingRecords.map(r => r.sNo).filter(sNo => sNo != null);
-              
-              // Find the next available S_NO by looking for gaps
-              let nextSNo = 1;
-              
-              // If we have existing records, find the first gap
-              if (existingSNos.length > 0) {
-                // Sort the S_NOs to ensure proper order
-                existingSNos.sort((a, b) => a - b);
+        if (body.sNo && body.sNo.trim() !== '') {
+          // Manual S_NO provided by admin
+          finalSNo = parseInt(body.sNo.trim());
+          
+          if (isNaN(finalSNo) || finalSNo <= 0) {
+            return res.status(400).json({ 
+              error: 'Invalid S_NO. Must be a positive number.' 
+            });
+          }
+          
+          // Check if this S_NO already exists
+          const existingRecord = await prisma.baptismRecord.findUnique({
+            where: { sNo: finalSNo },
+            select: { id: true }
+          });
+          
+          if (existingRecord) {
+            return res.status(400).json({ 
+              error: `S_NO ${finalSNo} already exists. Please choose a different number or use auto-generation.` 
+            });
+          }
+          
+          console.log(`Using manually provided S_NO: ${finalSNo}`);
+        } else {
+          // Auto-generate S_NO using sequence approach
+          let newRecord = null;
+          let attempts = 0;
+          const maxAttempts = 50;
+          
+          while (attempts < maxAttempts && !newRecord) {
+            try {
+              // Find the next available S_NO by checking for gaps
+              const result = await prisma.$transaction(async (tx) => {
+                // Get all existing S_NO values to find gaps
+                const existingRecords = await tx.baptismRecord.findMany({
+                  select: { sNo: true },
+                  orderBy: { sNo: 'asc' }
+                });
                 
-                // Look for gaps in the sequence starting from 1
-                for (let i = 0; i < existingSNos.length; i++) {
-                  const expectedSNo = i + 1;
-                  if (existingSNos[i] !== expectedSNo) {
-                    // Found a gap - use this number
-                    nextSNo = expectedSNo;
-                    console.log(`Found gap in sequence: expected ${expectedSNo}, found ${existingSNos[i]}, using ${nextSNo}`);
-                    break;
+                const existingSNos = existingRecords.map(r => r.sNo).filter(sNo => sNo != null);
+                
+                // Find the next available S_NO by looking for gaps
+                let nextSNo = 1;
+                
+                // If we have existing records, find the first gap
+                if (existingSNos.length > 0) {
+                  // Sort the S_NOs to ensure proper order
+                  existingSNos.sort((a, b) => a - b);
+                  
+                  // Look for gaps in the sequence starting from 1
+                  for (let i = 0; i < existingSNos.length; i++) {
+                    const expectedSNo = i + 1;
+                    if (existingSNos[i] !== expectedSNo) {
+                      // Found a gap - use this number
+                      nextSNo = expectedSNo;
+                      console.log(`Found gap in sequence: expected ${expectedSNo}, found ${existingSNos[i]}, using ${nextSNo}`);
+                      break;
+                    }
+                  }
+                  
+                  // If no gaps found, use the next number after the highest
+                  if (nextSNo === 1) {
+                    nextSNo = existingSNos[existingSNos.length - 1] + 1;
+                    console.log(`No gaps found, using next number after highest: ${nextSNo}`);
                   }
                 }
                 
-                // If no gaps found, use the next number after the highest
-                if (nextSNo === 1) {
-                  nextSNo = existingSNos[existingSNos.length - 1] + 1;
-                  console.log(`No gaps found, using next number after highest: ${nextSNo}`);
-                }
-              }
-              
-              // Double-check this S_NO doesn't exist (including empty records)
-              const existingCheck = await tx.baptismRecord.findUnique({
-                where: { sNo: nextSNo },
-                select: { id: true, baptismName: true, surname: true }
-              });
-              
-              if (existingCheck) {
-                console.log(`S_NO ${nextSNo} exists but is empty/incomplete, skipping to next available`);
-                // Find the next available S_NO by incrementing until we find a free one
-                let candidateSNo = nextSNo + 1;
-                while (candidateSNo <= nextSNo + 100) { // Prevent infinite loop
-                  const checkAgain = await tx.baptismRecord.findUnique({
-                    where: { sNo: candidateSNo },
-                    select: { id: true }
-                  });
-                  if (!checkAgain) {
-                    nextSNo = candidateSNo;
-                    console.log(`Found available S_NO after skipping existing: ${nextSNo}`);
-                    break;
+                // Double-check this S_NO doesn't exist (including empty records)
+                const existingCheck = await tx.baptismRecord.findUnique({
+                  where: { sNo: nextSNo },
+                  select: { id: true, baptismName: true, surname: true }
+                });
+                
+                if (existingCheck) {
+                  console.log(`S_NO ${nextSNo} exists but is empty/incomplete, skipping to next available`);
+                  // Find the next available S_NO by incrementing until we find a free one
+                  let candidateSNo = nextSNo + 1;
+                  while (candidateSNo <= nextSNo + 100) { // Prevent infinite loop
+                    const checkAgain = await tx.baptismRecord.findUnique({
+                      where: { sNo: candidateSNo },
+                      select: { id: true }
+                    });
+                    if (!checkAgain) {
+                      nextSNo = candidateSNo;
+                      console.log(`Found available S_NO after skipping existing: ${nextSNo}`);
+                      break;
+                    }
+                    candidateSNo++;
                   }
-                  candidateSNo++;
+                  
+                  if (candidateSNo > nextSNo + 100) {
+                    throw new Error('Could not find available S_NO after checking 100 consecutive numbers');
+                  }
                 }
                 
-                if (candidateSNo > nextSNo + 100) {
-                  throw new Error('Could not find available S_NO after checking 100 consecutive numbers');
+                console.log(`Attempting to create record with auto-generated S_NO: ${nextSNo}`);
+                
+                // Final verification - this should not happen due to our logic above
+                if (existingCheck) {
+                  throw new Error(`S_NO ${nextSNo} already exists despite all checks`);
                 }
-              }
-              
-              console.log(`Attempting to create record with S_NO: ${nextSNo}`);
-              
-              // Final verification - this should not happen due to our logic above
-              if (existingCheck) {
-                throw new Error(`S_NO ${nextSNo} already exists despite all checks`);
-              }
-              
-              // Create the record with the confirmed unique S_NO
-              return await tx.baptismRecord.create({
-                data: {
-                  sNo: nextSNo,
-                  baptismName: body.baptismName.trim(),
-                  surname: body.surname.trim(),
-                  otherName: body.otherName?.trim() || null,
-                  dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
-                  dateOfBaptism: body.dateOfBaptism ? new Date(body.dateOfBaptism) : null,
-                  placeOfBaptism: body.placeOfBaptism?.trim() || null,
-                  nameOfMinister: body.nameOfMinister?.trim() || null,
-                  nameOfGodParents: body.nameOfGodParents?.trim() || null,
-                  solemnOrPrivate: body.solemnOrPrivate?.trim() || null,
-                  fathersName: body.fathersName?.trim() || null,
-                  mothersName: body.mothersName?.trim() || null,
-                  homeTown: body.homeTown?.trim() || null,
-                  firstHolyCommunionDate: body.firstHolyCommunionDate ? new Date(body.firstHolyCommunionDate) : null,
-                  firstHolyCommunionPlace: body.firstHolyCommunionPlace?.trim() || null,
-                  firstHolyCommunionMinister: body.firstHolyCommunionMinister?.trim() || null,
-                  confirmationDate: body.confirmationDate ? new Date(body.confirmationDate) : null,
-                  confirmationPlace: body.confirmationPlace?.trim() || null,
-                  confirmationMinister: body.confirmationMinister?.trim() || null,
-                  marriageDate: body.marriageDate ? new Date(body.marriageDate) : null,
-                  marriagePartnerName: body.marriagePartnerName?.trim() || null,
-                  marriagePlace: body.marriagePlace?.trim() || null,
-                  marriageWitnesses: body.marriageWitnesses?.trim() || null,
-                  marriageMinister: body.marriageMinister?.trim() || null,
-                  dateOfDeath: body.dateOfDeath ? new Date(body.dateOfDeath) : null,
-                  remarks: body.remarks?.trim() || null,
-                }
+                
+                return nextSNo;
               });
-            });
-            
-            newRecord = result;
-            
-            console.log('New baptismal record created successfully:', {
-              id: newRecord.id,
-              sNo: newRecord.sNo,
-              name: `${newRecord.baptismName} ${newRecord.surname}`
-            });
-            
-            res.status(201).json({
-              message: 'Baptismal record created successfully',
-              record: newRecord
-            });
-            
-            return;
-            
-          } catch (createError) {
-            attempts++;
-            console.log(`Attempt ${attempts}/${maxAttempts} failed:`, createError.code || createError.message);
-            
-            // If it's not a unique constraint error, or we've tried too many times, re-throw
-            if (createError.code !== 'P2002' || attempts >= maxAttempts) {
-              throw createError;
+              
+              finalSNo = result;
+              break;
+              
+            } catch (createError) {
+              attempts++;
+              console.log(`Auto-generation attempt ${attempts}/${maxAttempts} failed:`, createError.code || createError.message);
+              
+              // If it's not a unique constraint error, or we've tried too many times, re-throw
+              if (createError.code !== 'P2002' || attempts >= maxAttempts) {
+                throw createError;
+              }
+              
+              // Longer delay for sequence approach
+              await new Promise(resolve => setTimeout(resolve, 100));
             }
-            
-            // Longer delay for sequence approach
-            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          
+          if (!finalSNo) {
+            throw new Error(`Failed to auto-generate S_NO after ${maxAttempts} attempts`);
           }
         }
         
-        if (!newRecord) {
-          throw new Error(`Failed to create baptismal record after ${maxAttempts} attempts`);
-        }
+        // Create the baptismal record with the determined S_NO
+        const newRecord = await prisma.baptismRecord.create({
+          data: {
+            sNo: finalSNo,
+            baptismName: body.baptismName.trim(),
+            surname: body.surname.trim(),
+            otherName: body.otherName?.trim() || null,
+            dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
+            dateOfBaptism: body.dateOfBaptism ? new Date(body.dateOfBaptism) : null,
+            placeOfBaptism: body.placeOfBaptism?.trim() || null,
+            nameOfMinister: body.nameOfMinister?.trim() || null,
+            nameOfGodParents: body.nameOfGodParents?.trim() || null,
+            solemnOrPrivate: body.solemnOrPrivate?.trim() || null,
+            fathersName: body.fathersName?.trim() || null,
+            mothersName: body.mothersName?.trim() || null,
+            homeTown: body.homeTown?.trim() || null,
+            firstHolyCommunionDate: body.firstHolyCommunionDate ? new Date(body.firstHolyCommunionDate) : null,
+            firstHolyCommunionPlace: body.firstHolyCommunionPlace?.trim() || null,
+            firstHolyCommunionMinister: body.firstHolyCommunionMinister?.trim() || null,
+            confirmationDate: body.confirmationDate ? new Date(body.confirmationDate) : null,
+            confirmationPlace: body.confirmationPlace?.trim() || null,
+            confirmationMinister: body.confirmationMinister?.trim() || null,
+            marriageDate: body.marriageDate ? new Date(body.marriageDate) : null,
+            marriagePartnerName: body.marriagePartnerName?.trim() || null,
+            marriagePlace: body.marriagePlace?.trim() || null,
+            marriageWitnesses: body.marriageWitnesses?.trim() || null,
+            marriageMinister: body.marriageMinister?.trim() || null,
+            dateOfDeath: body.dateOfDeath ? new Date(body.dateOfDeath) : null,
+            remarks: body.remarks?.trim() || null,
+          }
+        });
+        
+        console.log('New baptismal record created successfully:', {
+          id: newRecord.id,
+          sNo: newRecord.sNo,
+          name: `${newRecord.baptismName} ${newRecord.surname}`,
+          sNoType: body.sNo ? 'manual' : 'auto-generated'
+        });
+        
+        res.status(201).json({
+          message: 'Baptismal record created successfully',
+          record: newRecord
+        });
 
       } else {
         // Handle pastoral council initialization (existing code)

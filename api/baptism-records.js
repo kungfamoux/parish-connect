@@ -46,24 +46,85 @@ export default async (req, res) => {
           return;
         }
 
-        // Generate unique serial number using a more robust approach
+        // Generate unique serial number using sequence approach
         let newRecord = null;
         let attempts = 0;
         const maxAttempts = 50;
         
         while (attempts < maxAttempts && !newRecord) {
           try {
-            // Use a transaction to safely get and increment S_NO
+            // Find the next available S_NO by checking for gaps
             const result = await prisma.$transaction(async (tx) => {
-              // Get the current maximum S_NO
-              const maxRecord = await tx.baptismRecord.findFirst({
-                orderBy: { sNo: 'desc' },
-                select: { sNo: true }
+              // Get all existing S_NO values to find gaps
+              const existingRecords = await tx.baptismRecord.findMany({
+                select: { sNo: true },
+                orderBy: { sNo: 'asc' }
               });
               
-              const nextSNo = maxRecord ? (maxRecord.sNo || 0) + 1 : 1;
+              const existingSNos = existingRecords.map(r => r.sNo).filter(sNo => sNo != null);
               
-              // Create the record with the new S_NO
+              // Find the next available S_NO by looking for gaps
+              let nextSNo = 1;
+              
+              // If we have existing records, find the first gap
+              if (existingSNos.length > 0) {
+                // Sort the S_NOs to ensure proper order
+                existingSNos.sort((a, b) => a - b);
+                
+                // Look for gaps in the sequence starting from 1
+                for (let i = 0; i < existingSNos.length; i++) {
+                  const expectedSNo = i + 1;
+                  if (existingSNos[i] !== expectedSNo) {
+                    // Found a gap - use this number
+                    nextSNo = expectedSNo;
+                    console.log(`Found gap in sequence: expected ${expectedSNo}, found ${existingSNos[i]}, using ${nextSNo}`);
+                    break;
+                  }
+                }
+                
+                // If no gaps found, use the next number after the highest
+                if (nextSNo === 1) {
+                  nextSNo = existingSNos[existingSNos.length - 1] + 1;
+                  console.log(`No gaps found, using next number after highest: ${nextSNo}`);
+                }
+              }
+              
+              // Double-check this S_NO doesn't exist (including empty records)
+              const existingCheck = await tx.baptismRecord.findUnique({
+                where: { sNo: nextSNo },
+                select: { id: true, baptismName: true, surname: true }
+              });
+              
+              if (existingCheck) {
+                console.log(`S_NO ${nextSNo} exists but is empty/incomplete, skipping to next available`);
+                // Find the next available S_NO by incrementing until we find a free one
+                let candidateSNo = nextSNo + 1;
+                while (candidateSNo <= nextSNo + 100) { // Prevent infinite loop
+                  const checkAgain = await tx.baptismRecord.findUnique({
+                    where: { sNo: candidateSNo },
+                    select: { id: true }
+                  });
+                  if (!checkAgain) {
+                    nextSNo = candidateSNo;
+                    console.log(`Found available S_NO after skipping existing: ${nextSNo}`);
+                    break;
+                  }
+                  candidateSNo++;
+                }
+                
+                if (candidateSNo > nextSNo + 100) {
+                  throw new Error('Could not find available S_NO after checking 100 consecutive numbers');
+                }
+              }
+              
+              console.log(`Attempting to create record with S_NO: ${nextSNo}`);
+              
+              // Final verification - this should not happen due to our logic above
+              if (existingCheck) {
+                throw new Error(`S_NO ${nextSNo} already exists despite all checks`);
+              }
+              
+              // Create the record with the confirmed unique S_NO
               return await tx.baptismRecord.create({
                 data: {
                   sNo: nextSNo,
@@ -120,8 +181,8 @@ export default async (req, res) => {
               throw createError;
             }
             
-            // Small delay to avoid tight loop
-            await new Promise(resolve => setTimeout(resolve, 50));
+            // Longer delay for sequence approach
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
         

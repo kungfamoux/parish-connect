@@ -46,53 +46,57 @@ export default async (req, res) => {
           return;
         }
 
-        // Generate unique serial number with retry logic
-        let nextSNo = null;
+        // Generate unique serial number using a more robust approach
+        let newRecord = null;
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 50;
         
-        while (attempts < maxAttempts && nextSNo === null) {
+        while (attempts < maxAttempts && !newRecord) {
           try {
-            // Get the maximum S_NO
-            const result = await prisma.$queryRaw`
-              SELECT MAX("S_NO") as max_sno FROM "baptism_records"
-            `;
-            const maxSNo = result[0]?.max_sno ? Number(result[0].max_sno) : 0;
-            const candidateSNo = maxSNo + 1;
-            
-            // Try to create the record with this S_NO
-            const newRecord = await prisma.baptismRecord.create({
-              data: {
-                sNo: candidateSNo,
-                baptismName: body.baptismName.trim(),
-                surname: body.surname.trim(),
-                otherName: body.otherName?.trim() || null,
-                dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
-                dateOfBaptism: body.dateOfBaptism ? new Date(body.dateOfBaptism) : null,
-                placeOfBaptism: body.placeOfBaptism?.trim() || null,
-                nameOfMinister: body.nameOfMinister?.trim() || null,
-                nameOfGodParents: body.nameOfGodParents?.trim() || null,
-                solemnOrPrivate: body.solemnOrPrivate?.trim() || null,
-                fathersName: body.fathersName?.trim() || null,
-                mothersName: body.mothersName?.trim() || null,
-                homeTown: body.homeTown?.trim() || null,
-                firstHolyCommunionDate: body.firstHolyCommunionDate ? new Date(body.firstHolyCommunionDate) : null,
-                firstHolyCommunionPlace: body.firstHolyCommunionPlace?.trim() || null,
-                firstHolyCommunionMinister: body.firstHolyCommunionMinister?.trim() || null,
-                confirmationDate: body.confirmationDate ? new Date(body.confirmationDate) : null,
-                confirmationPlace: body.confirmationPlace?.trim() || null,
-                confirmationMinister: body.confirmationMinister?.trim() || null,
-                marriageDate: body.marriageDate ? new Date(body.marriageDate) : null,
-                marriagePartnerName: body.marriagePartnerName?.trim() || null,
-                marriagePlace: body.marriagePlace?.trim() || null,
-                marriageWitnesses: body.marriageWitnesses?.trim() || null,
-                marriageMinister: body.marriageMinister?.trim() || null,
-                dateOfDeath: body.dateOfDeath ? new Date(body.dateOfDeath) : null,
-                remarks: body.remarks?.trim() || null,
-              }
+            // Use a transaction to safely get and increment S_NO
+            const result = await prisma.$transaction(async (tx) => {
+              // Get the current maximum S_NO
+              const maxRecord = await tx.baptismRecord.findFirst({
+                orderBy: { sNo: 'desc' },
+                select: { sNo: true }
+              });
+              
+              const nextSNo = maxRecord ? (maxRecord.sNo || 0) + 1 : 1;
+              
+              // Create the record with the new S_NO
+              return await tx.baptismRecord.create({
+                data: {
+                  sNo: nextSNo,
+                  baptismName: body.baptismName.trim(),
+                  surname: body.surname.trim(),
+                  otherName: body.otherName?.trim() || null,
+                  dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
+                  dateOfBaptism: body.dateOfBaptism ? new Date(body.dateOfBaptism) : null,
+                  placeOfBaptism: body.placeOfBaptism?.trim() || null,
+                  nameOfMinister: body.nameOfMinister?.trim() || null,
+                  nameOfGodParents: body.nameOfGodParents?.trim() || null,
+                  solemnOrPrivate: body.solemnOrPrivate?.trim() || null,
+                  fathersName: body.fathersName?.trim() || null,
+                  mothersName: body.mothersName?.trim() || null,
+                  homeTown: body.homeTown?.trim() || null,
+                  firstHolyCommunionDate: body.firstHolyCommunionDate ? new Date(body.firstHolyCommunionDate) : null,
+                  firstHolyCommunionPlace: body.firstHolyCommunionPlace?.trim() || null,
+                  firstHolyCommunionMinister: body.firstHolyCommunionMinister?.trim() || null,
+                  confirmationDate: body.confirmationDate ? new Date(body.confirmationDate) : null,
+                  confirmationPlace: body.confirmationPlace?.trim() || null,
+                  confirmationMinister: body.confirmationMinister?.trim() || null,
+                  marriageDate: body.marriageDate ? new Date(body.marriageDate) : null,
+                  marriagePartnerName: body.marriagePartnerName?.trim() || null,
+                  marriagePlace: body.marriagePlace?.trim() || null,
+                  marriageWitnesses: body.marriageWitnesses?.trim() || null,
+                  marriageMinister: body.marriageMinister?.trim() || null,
+                  dateOfDeath: body.dateOfDeath ? new Date(body.dateOfDeath) : null,
+                  remarks: body.remarks?.trim() || null,
+                }
+              });
             });
             
-            nextSNo = candidateSNo;
+            newRecord = result;
             
             console.log('New baptismal record created successfully:', {
               id: newRecord.id,
@@ -108,21 +112,21 @@ export default async (req, res) => {
             return;
             
           } catch (createError) {
-            if (createError.code === 'P2002' && createError.meta?.target?.includes('S_NO')) {
-              // Unique constraint failed on S_NO, try again with a different number
-              attempts++;
-              console.log(`S_NO conflict detected, retrying... (attempt ${attempts}/${maxAttempts})`);
-              // Small delay to avoid tight loop
-              await new Promise(resolve => setTimeout(resolve, 100));
-            } else {
-              // Different error, re-throw it
+            attempts++;
+            console.log(`Attempt ${attempts}/${maxAttempts} failed:`, createError.code || createError.message);
+            
+            // If it's not a unique constraint error, or we've tried too many times, re-throw
+            if (createError.code !== 'P2002' || attempts >= maxAttempts) {
               throw createError;
             }
+            
+            // Small delay to avoid tight loop
+            await new Promise(resolve => setTimeout(resolve, 50));
           }
         }
         
-        if (nextSNo === null) {
-          throw new Error('Failed to generate unique serial number after multiple attempts');
+        if (!newRecord) {
+          throw new Error(`Failed to create baptismal record after ${maxAttempts} attempts`);
         }
 
       } else {

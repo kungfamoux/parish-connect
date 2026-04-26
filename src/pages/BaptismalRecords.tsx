@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Filter, Calendar, User, MapPin, Church, Eye, Loader2, Database, Users, X } from 'lucide-react';
 
 export default function BaptismalRecords() {
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  const observer = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const recordsPerPage = 20;
 
@@ -70,12 +75,16 @@ export default function BaptismalRecords() {
     };
   }, []);
 
-  const fetchRecords = async () => {
+  const fetchRecords = async (page: number = 1, append: boolean = false) => {
     try {
-      setLoading(true);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       
       const params = new URLSearchParams({
-        page: currentPage.toString(),
+        page: page.toString(),
         limit: recordsPerPage.toString(),
         search: searchTerm
       });
@@ -87,14 +96,58 @@ export default function BaptismalRecords() {
       }
       
       const data = await response.json();
-      setRecords(data.records);
+      
+      if (append) {
+        setRecords(prev => [...prev, ...data.records]);
+      } else {
+        setRecords(data.records);
+      }
+      
       setTotalRecords(data.total);
+      setHasMore(data.records.length === recordsPerPage && data.records.length > 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setLoading(false);
+      if (append) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
+
+  const loadMoreRecords = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchRecords(nextPage, true);
+  }, [currentPage, loadingMore, hasMore, searchTerm]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMoreRecords();
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '100px'
+      }
+    );
+    
+    if (loadMoreRef.current) {
+      observer.current.observe(loadMoreRef.current);
+    }
+    
+    return () => {
+      if (observer.current) observer.current.disconnect();
+    };
+  }, [loadMoreRecords, hasMore, loadingMore]);
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'N/A';
@@ -108,6 +161,8 @@ export default function BaptismalRecords() {
   const handleSearch = () => {
     setSearchTerm(searchInput);
     setCurrentPage(1);
+    setRecords([]);
+    setHasMore(true);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -120,7 +175,54 @@ export default function BaptismalRecords() {
     setSearchInput('');
     setSearchTerm('');
     setCurrentPage(1);
+    setRecords([]);
+    setHasMore(true);
   };
+
+  // Skeleton loading components
+  const SkeletonRow = () => (
+    <tr>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse"></div>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 animate-pulse"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28 animate-pulse"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+      </td>
+    </tr>
+  );
+
+  const MobileSkeletonRow = () => (
+    <div className={`p-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} border-b`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3 flex-1">
+          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse flex-shrink-0"></div>
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse"></div>
+          </div>
+        </div>
+        <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse flex-shrink-0"></div>
+      </div>
+    </div>
+  );
 
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
 
@@ -350,6 +452,22 @@ export default function BaptismalRecords() {
                       </td>
                     </tr>
                   ))}
+                  
+                  {/* Skeleton loading for infinite scroll */}
+                  {loadingMore && Array.from({ length: 3 }).map((_, index) => (
+                    <SkeletonRow key={`skeleton-${index}`} />
+                  ))}
+                  
+                  {/* Load more trigger */}
+                  {hasMore && !loadingMore && (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4">
+                        <div ref={loadMoreRef} className="text-center">
+                          <div className="h-2 w-full"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -402,57 +520,49 @@ export default function BaptismalRecords() {
                   </div>
                 </div>
               ))}
+              
+              {/* Mobile skeleton loading */}
+              {loadingMore && Array.from({ length: 3 }).map((_, index) => (
+                <MobileSkeletonRow key={`mobile-skeleton-${index}`} />
+              ))}
+              
+              {/* Mobile load more trigger */}
+              {hasMore && !loadingMore && (
+                <div ref={loadMoreRef} className="p-4">
+                  <div className="h-2 w-full"></div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
           {records.length === 0 && !loading && (
             <div className="text-center py-16">
-              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <div className="text-xl text-gray-500 font-medium">No records found</div>
-              <p className="text-gray-400 mt-2">Try adjusting your search criteria</p>
+              <Users className={`h-16 w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+              <div className={`text-xl font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No records found</div>
+              <p className={`mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Try adjusting your search criteria</p>
             </div>
           )}
-
-        {/* Enhanced Pagination - Mobile Friendly */}
-        {totalPages > 1 && (
-          <div className={`mt-8 flex items-center justify-between rounded-xl shadow-lg border p-4 ${
-            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-          }`}>
-            <div className={`hidden sm:block text-sm ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Page <span className={`font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{currentPage}</span> of{' '}
-              <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totalPages}</span>
+          
+          {/* Loading indicator for infinite scroll */}
+          {loadingMore && records.length > 0 && (
+            <div className="text-center py-4">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading more records...</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className={`flex items-center gap-2 px-3 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm ${
-                  isDarkMode 
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <span>×</span>
-                <span className="font-medium hidden sm:inline">Previous</span>
-              </button>
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className={`flex items-center gap-2 px-3 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm ${
-                  isDarkMode 
-                    ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className="font-medium hidden sm:inline">Next</span>
-                <span>{'>'}</span>
-              </button>
+          )}
+          
+          {/* End of records indicator */}
+          {!hasMore && records.length > 0 && (
+            <div className="text-center py-4">
+              <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                Showing {records.length} of {totalRecords.toLocaleString()} records
+              </p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Simplified Baptism Record Details Modal */}

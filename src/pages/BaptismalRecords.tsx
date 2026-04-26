@@ -361,257 +361,160 @@ export default function BaptismalRecords() {
         )}
       </div>
 
-      {/* Enhanced Baptism Record Details Modal */}
+      {/* Simplified Baptism Record Details Modal */}
       {selectedRecord && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden my-4 transform transition-all duration-300 scale-100 hover:scale-[1.01]">
-            {/* Header with gradient and enhanced design */}
-            <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white overflow-hidden">
-              <div className="absolute inset-0 bg-black/20"></div>
-              <div className="relative px-6 py-8 sm:px-8 sm:py-10">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
-                        <Church className="h-8 w-8 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl sm:text-3xl font-bold text-white">Baptism Record</h2>
-                        <p className="text-white/80 text-sm mt-1">Certificate of Baptism</p>
-                      </div>
-                    </div>
-                    
-                    {/* Person's name prominently displayed */}
-                    <div className="mt-6">
-                      <h3 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-                        {selectedRecord.baptismName} {selectedRecord.surname}
-                      </h3>
-                      {selectedRecord.otherName && (
-                        <p className="text-white/80 text-lg mt-2">{selectedRecord.otherName}</p>
-                      )}
-                    </div>
-                    
-                    {/* Serial number badge */}
-                    <div className="mt-4 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30">
-                      <span className="text-white/80 text-sm">Serial Number:</span>
-                      <span className="text-white font-bold text-lg">{selectedRecord.sNo || 'N/A'}</span>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => setSelectedRecord(null)}
-                    className="bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-2xl p-3 transition-all duration-200 border border-white/30"
-                    title="Close modal"
-                  >
-                    <X className="h-6 w-6 text-white" />
-                  </button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Simple Header */}
+            <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Church className="h-5 w-5 text-gray-600" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Baptism Record</h2>
+                  <p className="text-sm text-gray-600">S/No: {selectedRecord.sNo || 'N/A'}</p>
                 </div>
               </div>
-              
-              {/* Decorative wave pattern */}
-              <div className="absolute bottom-0 left-0 right-0">
-                <svg viewBox="0 0 1200 120" className="w-full h-12">
-                  <path fill="white" fillOpacity="0.1" d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7C1248,53,1344,43,1392,37.3L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z"></path>
-                </svg>
-              </div>
+              <button
+                onClick={() => setSelectedRecord(null)}
+                className="text-gray-400 hover:text-gray-600 p-1"
+                title="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
             
-            {/* Content with enhanced design */}
-            <div className="overflow-y-auto max-h-[calc(95vh-200px)] bg-gradient-to-b from-gray-50 to-white">
-              <div className="p-6 sm:p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="p-6">
+                {/* Person's Name */}
+                <div className="text-center mb-6 pb-6 border-b border-gray-200">
+                  <h3 className="text-2xl font-semibold text-gray-900">
+                    {selectedRecord.baptismName} {selectedRecord.surname}
+                  </h3>
+                  {selectedRecord.otherName && (
+                    <p className="text-gray-600 mt-1">{selectedRecord.otherName}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   
-                  {/* Personal Information Card */}
-                  <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
-                        <h4 className="text-white font-semibold flex items-center gap-2">
-                          <User className="h-5 w-5" />
-                          Personal Information
-                        </h4>
+                  {/* Personal Information */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900 text-sm uppercase tracking-wide">Personal Information</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Date of Birth:</span>
+                        <span className="text-gray-900 font-medium">{formatDate(selectedRecord.dateOfBirth)}</span>
                       </div>
-                      <div className="p-6 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
-                            <p className="text-gray-600 text-sm font-medium mb-1">Date of Birth</p>
-                            <p className="text-gray-900 font-semibold text-lg">{formatDate(selectedRecord.dateOfBirth)}</p>
-                          </div>
-                          <div className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
-                            <p className="text-gray-600 text-sm font-medium mb-1">Home Town</p>
-                            <p className="text-gray-900 font-semibold text-lg">{selectedRecord.homeTown || 'N/A'}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Baptism Details Card */}
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                      <div className="bg-gradient-to-r from-purple-500 to-pink-600 px-6 py-4">
-                        <h4 className="text-white font-semibold flex items-center gap-2">
-                          <Church className="h-5 w-5" />
-                          Baptism Details
-                        </h4>
-                      </div>
-                      <div className="p-6 space-y-4">
-                        <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
-                          <p className="text-purple-600 text-sm font-medium mb-1">Date of Baptism</p>
-                          <p className="text-purple-900 font-bold text-xl">{formatDate(selectedRecord.dateOfBaptism)}</p>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
-                            <p className="text-gray-600 text-sm font-medium mb-1">Place of Baptism</p>
-                            <p className="text-gray-900 font-semibold">{selectedRecord.placeOfBaptism || 'N/A'}</p>
-                          </div>
-                          <div className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
-                            <p className="text-gray-600 text-sm font-medium mb-1">Type</p>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                              {selectedRecord.solemnOrPrivate || 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                          <p className="text-blue-600 text-sm font-medium mb-2">Minister</p>
-                          <p className="text-blue-900 font-semibold">{selectedRecord.nameOfMinister || 'N/A'}</p>
-                        </div>
-                        <div className="bg-green-50 rounded-xl p-4 border border-green-100">
-                          <p className="text-green-600 text-sm font-medium mb-2">God Parents</p>
-                          <p className="text-green-900 font-semibold">{selectedRecord.nameOfGodParents || 'N/A'}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Parents Information Card */}
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                      <div className="bg-gradient-to-r from-green-500 to-teal-600 px-6 py-4">
-                        <h4 className="text-white font-semibold flex items-center gap-2">
-                          <Users className="h-5 w-5" />
-                          Parents Information
-                        </h4>
-                      </div>
-                      <div className="p-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                            <p className="text-blue-600 text-sm font-medium mb-1">Father's Name</p>
-                            <p className="text-blue-900 font-semibold">{selectedRecord.fathersName || 'N/A'}</p>
-                          </div>
-                          <div className="bg-pink-50 rounded-xl p-4 border border-pink-100">
-                            <p className="text-pink-600 text-sm font-medium mb-1">Mother's Name</p>
-                            <p className="text-pink-900 font-semibold">{selectedRecord.mothersName || 'N/A'}</p>
-                          </div>
-                        </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Home Town:</span>
+                        <span className="text-gray-900 font-medium">{selectedRecord.homeTown || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Other Sacraments Sidebar */}
-                  <div className="space-y-6">
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
-                        <h4 className="text-white font-semibold flex items-center gap-2">
-                          <Calendar className="h-5 w-5" />
-                          Other Sacraments
-                        </h4>
+                  {/* Baptism Information */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900 text-sm uppercase tracking-wide">Baptism Details</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Date of Baptism:</span>
+                        <span className="text-gray-900 font-medium">{formatDate(selectedRecord.dateOfBaptism)}</span>
                       </div>
-                      <div className="p-6 space-y-4">
-                        {/* First Holy Communion */}
-                        <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 hover:bg-indigo-100 transition-colors">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                            <p className="text-indigo-700 font-semibold text-sm">First Holy Communion</p>
-                          </div>
-                          {selectedRecord.firstHolyCommunionDate ? (
-                            <div className="space-y-1">
-                              <p className="text-indigo-900 font-medium">{formatDate(selectedRecord.firstHolyCommunionDate)}</p>
-                              {selectedRecord.firstHolyCommunionPlace && (
-                                <p className="text-indigo-700 text-sm">at {selectedRecord.firstHolyCommunionPlace}</p>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 italic">Not recorded</p>
-                          )}
-                        </div>
-
-                        {/* Confirmation */}
-                        <div className="bg-purple-50 rounded-xl p-4 border border-purple-100 hover:bg-purple-100 transition-colors">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                            <p className="text-purple-700 font-semibold text-sm">Confirmation</p>
-                          </div>
-                          {selectedRecord.confirmationDate ? (
-                            <div className="space-y-1">
-                              <p className="text-purple-900 font-medium">{formatDate(selectedRecord.confirmationDate)}</p>
-                              {selectedRecord.confirmationPlace && (
-                                <p className="text-purple-700 text-sm">at {selectedRecord.confirmationPlace}</p>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 italic">Not recorded</p>
-                          )}
-                        </div>
-
-                        {/* Marriage */}
-                        <div className="bg-pink-50 rounded-xl p-4 border border-pink-100 hover:bg-pink-100 transition-colors">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
-                            <p className="text-pink-700 font-semibold text-sm">Marriage</p>
-                          </div>
-                          {selectedRecord.marriageDate ? (
-                            <div className="space-y-1">
-                              <p className="text-pink-900 font-medium">{formatDate(selectedRecord.marriageDate)}</p>
-                              {selectedRecord.marriagePartnerName && (
-                                <p className="text-pink-700 text-sm">to {selectedRecord.marriagePartnerName}</p>
-                              )}
-                              {selectedRecord.marriagePlace && (
-                                <p className="text-pink-700 text-sm">at {selectedRecord.marriagePlace}</p>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 italic">Not recorded</p>
-                          )}
-                        </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Place of Baptism:</span>
+                        <span className="text-gray-900 font-medium">{selectedRecord.placeOfBaptism || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Type:</span>
+                        <span className="text-gray-900 font-medium">{selectedRecord.solemnOrPrivate || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Minister:</span>
+                        <span className="text-gray-900 font-medium">{selectedRecord.nameOfMinister || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-gray-600 text-sm">God Parents:</span>
+                        <span className="text-gray-900 font-medium text-right">{selectedRecord.nameOfGodParents || 'N/A'}</span>
                       </div>
                     </div>
-
-                    {/* Additional Information */}
-                    {(selectedRecord.dateOfDeath || selectedRecord.remarks) && (
-                      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                        <div className="bg-gradient-to-r from-gray-600 to-gray-800 px-6 py-4">
-                          <h4 className="text-white font-semibold">Additional Information</h4>
-                        </div>
-                        <div className="p-6 space-y-4">
-                          {selectedRecord.dateOfDeath && (
-                            <div className="bg-red-50 rounded-xl p-4 border border-red-100">
-                              <p className="text-red-600 text-sm font-medium mb-1">Date of Death</p>
-                              <p className="text-red-900 font-semibold">{formatDate(selectedRecord.dateOfDeath)}</p>
-                            </div>
-                          )}
-                          {selectedRecord.remarks && (
-                            <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
-                              <p className="text-yellow-600 text-sm font-medium mb-2">Remarks</p>
-                              <p className="text-yellow-900 font-medium">{selectedRecord.remarks}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
+
+                  {/* Parents Information */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900 text-sm uppercase tracking-wide">Parents Information</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Father's Name:</span>
+                        <span className="text-gray-900 font-medium">{selectedRecord.fathersName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Mother's Name:</span>
+                        <span className="text-gray-900 font-medium">{selectedRecord.mothersName || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Other Sacraments */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900 text-sm uppercase tracking-wide">Other Sacraments</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-gray-600 text-sm mb-1">First Holy Communion:</p>
+                        <p className="text-gray-900 font-medium">
+                          {selectedRecord.firstHolyCommunionDate ? 
+                            `${formatDate(selectedRecord.firstHolyCommunionDate)}${selectedRecord.firstHolyCommunionPlace ? ` at ${selectedRecord.firstHolyCommunionPlace}` : ''}` : 
+                            'Not recorded'
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm mb-1">Confirmation:</p>
+                        <p className="text-gray-900 font-medium">
+                          {selectedRecord.confirmationDate ? 
+                            `${formatDate(selectedRecord.confirmationDate)}${selectedRecord.confirmationPlace ? ` at ${selectedRecord.confirmationPlace}` : ''}` : 
+                            'Not recorded'
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600 text-sm mb-1">Marriage:</p>
+                        <p className="text-gray-900 font-medium">
+                          {selectedRecord.marriageDate ? 
+                            `${formatDate(selectedRecord.marriageDate)}${selectedRecord.marriagePartnerName ? ` to ${selectedRecord.marriagePartnerName}` : ''}${selectedRecord.marriagePlace ? ` at ${selectedRecord.marriagePlace}` : ''}` : 
+                            'Not recorded'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Information */}
+                  {(selectedRecord.dateOfDeath || selectedRecord.remarks) && (
+                    <div className="md:col-span-2 space-y-4 pt-6 border-t border-gray-200">
+                      <h4 className="font-medium text-gray-900 text-sm uppercase tracking-wide">Additional Information</h4>
+                      <div className="space-y-3">
+                        {selectedRecord.dateOfDeath && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">Date of Death:</span>
+                            <span className="text-gray-900 font-medium">{formatDate(selectedRecord.dateOfDeath)}</span>
+                          </div>
+                        )}
+                        {selectedRecord.remarks && (
+                          <div>
+                            <p className="text-gray-600 text-sm mb-1">Remarks:</p>
+                            <p className="text-gray-900 font-medium">{selectedRecord.remarks}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Add custom styles for animations */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

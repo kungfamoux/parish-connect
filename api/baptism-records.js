@@ -387,6 +387,312 @@ export default async (req, res) => {
     return;
   }
 
-  // Handle other HTTP methods (GET, PUT, DELETE) - existing code would go here
+  // Handle GET request for fetching baptismal records
+  if (req.method === 'GET') {
+    let prisma;
+    try {
+      // Initialize Prisma client
+      const { PrismaClient } = await import('@prisma/client');
+      prisma = new PrismaClient({
+        accelerateUrl: process.env.DATABASE_URL,
+        log: ['info', 'warn', 'error'],
+      });
+
+      await prisma.$connect();
+
+      const { page = 1, limit = 20, search = '' } = req.query;
+      const currentPage = parseInt(page);
+      const recordsPerPage = parseInt(limit);
+      const offset = (currentPage - 1) * recordsPerPage;
+
+      console.log('=== GET Baptismal Records Request ===');
+      console.log('Page:', currentPage);
+      console.log('Limit:', recordsPerPage);
+      console.log('Search:', search);
+
+      // Build search conditions
+      let whereConditions = {
+        baptismName: { not: null }
+      };
+
+      if (search && search.trim() !== '') {
+        const searchTerm = search.trim();
+        const searchTerms = searchTerm.split(/\s+/).filter(term => term.length > 0);
+        
+        if (searchTerms.length > 0) {
+          // Enhanced search logic for full names
+          if (searchTerms.length >= 2) {
+            // Try exact match for full names (2+ words)
+            const exactConditions = searchTerms.map((term, index) => {
+              if (index === 0) {
+                return {
+                  OR: [
+                    { baptismName: { contains: term, mode: 'insensitive' } },
+                    { otherName: { contains: term, mode: 'insensitive' } },
+                    { surname: { contains: term, mode: 'insensitive' } }
+                  ]
+                };
+              } else {
+                return {
+                  OR: [
+                    { baptismName: { contains: term, mode: 'insensitive' } },
+                    { otherName: { contains: term, mode: 'insensitive' } },
+                    { surname: { contains: term, mode: 'insensitive' } }
+                  ]
+                };
+              }
+            });
+
+            // Try exact full name match first
+            const exactMatchConditions = {
+              AND: [
+                { baptismName: { contains: searchTerms[0], mode: 'insensitive' } },
+                { surname: { contains: searchTerms[searchTerms.length - 1], mode: 'insensitive' } }
+              ]
+            };
+
+            // Check for exact full name match
+            const exactMatch = await prisma.baptismRecord.findMany({
+              where: exactMatchConditions,
+              take: 1
+            });
+
+            if (exactMatch.length > 0) {
+              whereConditions = exactMatchConditions;
+            } else {
+              // Fall back to broader search
+              whereConditions = {
+                AND: exactConditions
+              };
+            }
+          } else {
+            // Single term search
+            whereConditions = {
+              AND: [
+                { baptismName: { not: null } },
+                {
+                  OR: [
+                    { baptismName: { contains: searchTerm, mode: 'insensitive' } },
+                    { otherName: { contains: searchTerm, mode: 'insensitive' } },
+                    { surname: { contains: searchTerm, mode: 'insensitive' } },
+                    { fathersName: { contains: searchTerm, mode: 'insensitive' } },
+                    { mothersName: { contains: searchTerm, mode: 'insensitive' } },
+                    { sNo: !isNaN(searchTerm) ? parseInt(searchTerm) : undefined }
+                  ].filter(condition => condition !== undefined)
+                }
+              ]
+            };
+          }
+        }
+      }
+
+      // Get total count for pagination
+      const totalRecords = await prisma.baptismRecord.count({
+        where: whereConditions
+      });
+
+      // Get records with pagination
+      const records = await prisma.baptismRecord.findMany({
+        where: whereConditions,
+        orderBy: [
+          { sNo: 'asc' }
+        ],
+        skip: offset,
+        take: recordsPerPage
+      });
+
+      console.log(`Found ${records.length} records out of ${totalRecords} total`);
+
+      res.status(200).json({
+        records,
+        pagination: {
+          currentPage,
+          recordsPerPage,
+          totalRecords,
+          totalPages: Math.ceil(totalRecords / recordsPerPage),
+          hasNextPage: currentPage < Math.ceil(totalRecords / recordsPerPage),
+          hasPrevPage: currentPage > 1
+        }
+      });
+
+    } catch (error) {
+      console.error('=== GET ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      
+      res.status(500).json({ 
+        error: 'Internal server error',
+        message: error.message,
+        type: error.constructor.name
+      });
+    } finally {
+      if (prisma) {
+        await prisma.$disconnect();
+      }
+    }
+    return;
+  }
+
+  // Handle PUT request for updating baptismal records
+  if (req.method === 'PUT') {
+    let prisma;
+    try {
+      const { id } = req.query;
+      const body = req.body;
+
+      if (!id || !body) {
+        return res.status(400).json({ 
+          error: 'Missing record ID or update data' 
+        });
+      }
+
+      // Initialize Prisma client
+      const { PrismaClient } = await import('@prisma/client');
+      prisma = new PrismaClient({
+        accelerateUrl: process.env.DATABASE_URL,
+        log: ['info', 'warn', 'error'],
+      });
+
+      await prisma.$connect();
+
+      // Check if record exists
+      const existingRecord = await prisma.baptismRecord.findUnique({
+        where: { id: parseInt(id) }
+      });
+
+      if (!existingRecord) {
+        return res.status(404).json({ 
+          error: 'Baptismal record not found' 
+        });
+      }
+
+      // Update the record
+      const updatedRecord = await prisma.baptismRecord.update({
+        where: { id: parseInt(id) },
+        data: {
+          baptismName: body.baptismName?.trim() || existingRecord.baptismName,
+          surname: body.surname?.trim() || existingRecord.surname,
+          otherName: body.otherName?.trim() || existingRecord.otherName,
+          dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : existingRecord.dateOfBirth,
+          dateOfBaptism: body.dateOfBaptism ? new Date(body.dateOfBaptism) : existingRecord.dateOfBaptism,
+          placeOfBaptism: body.placeOfBaptism?.trim() || existingRecord.placeOfBaptism,
+          nameOfMinister: body.nameOfMinister?.trim() || existingRecord.nameOfMinister,
+          nameOfGodParents: body.nameOfGodParents?.trim() || existingRecord.nameOfGodParents,
+          solemnOrPrivate: body.solemnOrPrivate?.trim() || existingRecord.solemnOrPrivate,
+          fathersName: body.fathersName?.trim() || existingRecord.fathersName,
+          mothersName: body.mothersName?.trim() || existingRecord.mothersName,
+          homeTown: body.homeTown?.trim() || existingRecord.homeTown,
+          firstHolyCommunionDate: body.firstHolyCommunionDate ? new Date(body.firstHolyCommunionDate) : existingRecord.firstHolyCommunionDate,
+          firstHolyCommunionPlace: body.firstHolyCommunionPlace?.trim() || existingRecord.firstHolyCommunionPlace,
+          firstHolyCommunionMinister: body.firstHolyCommunionMinister?.trim() || existingRecord.firstHolyCommunionMinister,
+          confirmationDate: body.confirmationDate ? new Date(body.confirmationDate) : existingRecord.confirmationDate,
+          confirmationPlace: body.confirmationPlace?.trim() || existingRecord.confirmationPlace,
+          confirmationMinister: body.confirmationMinister?.trim() || existingRecord.confirmationMinister,
+          marriageDate: body.marriageDate ? new Date(body.marriageDate) : existingRecord.marriageDate,
+          marriagePartnerName: body.marriagePartnerName?.trim() || existingRecord.marriagePartnerName,
+          marriagePlace: body.marriagePlace?.trim() || existingRecord.marriagePlace,
+          marriageWitnesses: body.marriageWitnesses?.trim() || existingRecord.marriageWitnesses,
+          marriageMinister: body.marriageMinister?.trim() || existingRecord.marriageMinister,
+          dateOfDeath: body.dateOfDeath ? new Date(body.dateOfDeath) : existingRecord.dateOfDeath,
+          remarks: body.remarks?.trim() || existingRecord.remarks,
+        }
+      });
+
+      console.log('Baptismal record updated successfully:', {
+        id: updatedRecord.id,
+        sNo: updatedRecord.sNo,
+        name: `${updatedRecord.baptismName} ${updatedRecord.surname}`
+      });
+
+      res.status(200).json({
+        message: 'Baptismal record updated successfully',
+        record: updatedRecord
+      });
+
+    } catch (error) {
+      console.error('=== PUT ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      
+      res.status(500).json({ 
+        error: 'Internal server error',
+        message: error.message,
+        type: error.constructor.name
+      });
+    } finally {
+      if (prisma) {
+        await prisma.$disconnect();
+      }
+    }
+    return;
+  }
+
+  // Handle DELETE request for deleting baptismal records
+  if (req.method === 'DELETE') {
+    let prisma;
+    try {
+      const { id } = req.query;
+
+      if (!id) {
+        return res.status(400).json({ 
+          error: 'Missing record ID' 
+        });
+      }
+
+      // Initialize Prisma client
+      const { PrismaClient } = await import('@prisma/client');
+      prisma = new PrismaClient({
+        accelerateUrl: process.env.DATABASE_URL,
+        log: ['info', 'warn', 'error'],
+      });
+
+      await prisma.$connect();
+
+      // Check if record exists
+      const existingRecord = await prisma.baptismRecord.findUnique({
+        where: { id: parseInt(id) }
+      });
+
+      if (!existingRecord) {
+        return res.status(404).json({ 
+          error: 'Baptismal record not found' 
+        });
+      }
+
+      // Delete the record
+      await prisma.baptismRecord.delete({
+        where: { id: parseInt(id) }
+      });
+
+      console.log('Baptismal record deleted successfully:', {
+        id: existingRecord.id,
+        sNo: existingRecord.sNo,
+        name: `${existingRecord.baptismName} ${existingRecord.surname}`
+      });
+
+      res.status(200).json({
+        message: 'Baptismal record deleted successfully',
+        record: existingRecord
+      });
+
+    } catch (error) {
+      console.error('=== DELETE ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      
+      res.status(500).json({ 
+        error: 'Internal server error',
+        message: error.message,
+        type: error.constructor.name
+      });
+    } finally {
+      if (prisma) {
+        await prisma.$disconnect();
+      }
+    }
+    return;
+  }
+
+  // Handle unsupported HTTP methods
   res.status(405).json({ error: 'Method not allowed' });
 };

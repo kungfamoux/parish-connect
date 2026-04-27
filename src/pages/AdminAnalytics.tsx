@@ -43,7 +43,7 @@ export default function AdminAnalytics() {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/analytics');
+      const response = await fetch('/api/v1/analytics/analytics');
       
       if (!response.ok) {
         throw new Error('Failed to fetch analytics data');

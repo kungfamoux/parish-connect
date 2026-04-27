@@ -1,49 +1,24 @@
-// Baptismal Records API with proper POST handling
-export default async (req, res) => {
-  // Set CORS headers first
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// Baptismal Records API with proper middleware
+import { corsMiddleware } from '../../middleware/cors.js';
+import { withDatabase } from '../../middleware/database.js';
+import { errorHandler } from '../../middleware/errorHandler.js';
+import { validateRequired } from '../../utils/validation.js';
+import { successResponse, errorResponse, paginatedResponse } from '../../utils/response.js';
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  // Check if DATABASE_URL is set
-  if (!process.env.DATABASE_URL) {
-    return res.status(500).json({
-      error: 'Database configuration error',
-      message: 'DATABASE_URL environment variable is not set'
-    });
-  }
+const handler = async (req, res) => {
+  const { prisma } = req;
 
   // Handle POST request for creating new baptismal records
   if (req.method === 'POST') {
-    let prisma;
     try {
       // Check if this is a baptismal record creation (has baptismal record fields)
       const body = req.body;
       if (body && body.baptismName) {
-        // Initialize Prisma client
-        const { PrismaClient } = await import('@prisma/client');
-        prisma = new PrismaClient({
-          accelerateUrl: process.env.DATABASE_URL,
-          log: ['info', 'warn', 'error'],
-        });
-
-        await prisma.$connect();
 
         // Validate required fields
-        const requiredFields = ['baptismName', 'surname'];
-        const missingFields = requiredFields.filter(field => !body[field] || body[field].trim() === '');
-        
-        if (missingFields.length > 0) {
-          res.status(400).json({ 
-            error: 'Missing required fields', 
-            missingFields 
-          });
-          return;
+        const validation = validateRequired(body, ['baptismName', 'surname']);
+        if (!validation.isValid) {
+          return res.status(400).json(errorResponse(validation.message, 400, validation.missingFields));
         }
 
         // Handle S_NO - either manual or auto-generated
@@ -816,3 +791,6 @@ export default async (req, res) => {
   // Handle unsupported HTTP methods
   res.status(405).json({ error: 'Method not allowed' });
 };
+
+// Export with middleware wrapper
+export default corsMiddleware(withDatabase(handler));

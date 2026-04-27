@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Calendar, User, MapPin, Church, Eye, Loader2, Database, Users, X } from 'lucide-react';
+import { Search, X, Church, Calendar, MapPin, Eye, Loader2, Database, Users } from 'lucide-react';
+import { formatDate } from '../utils/date/formatDate';
+import { useDarkMode } from '../hooks/ui/useDarkMode';
+import { SearchInput } from '../components/features/baptism/SearchInput';
+import { FilterPills } from '../components/features/baptism/FilterPills';
 
 export default function BaptismalRecords() {
   const [records, setRecords] = useState<any[]>([]);
@@ -10,7 +14,14 @@ export default function BaptismalRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const isDarkMode = useDarkMode();
+  
+  // Enhanced search states
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const recordsPerPage = 20;
 
@@ -22,15 +33,27 @@ export default function BaptismalRecords() {
     };
     document.addEventListener('contextmenu', handleContextMenu);
 
-    // Disable print
-    const handleBeforePrint = (e: Event) => {
+    // Disable text selection
+    const handleSelectStart = (e: Event) => {
       e.preventDefault();
+    };
+    document.addEventListener('selectstart', handleSelectStart);
+
+    // Disable copy
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+    };
+    document.addEventListener('copy', handleCopy);
+
+    // Disable print
+    const handleBeforePrint = () => {
+      window.location.reload();
     };
     window.addEventListener('beforeprint', handleBeforePrint);
 
-    // Disable screenshots
+    // Disable devtools
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'PrintScreen' || (e.ctrlKey && e.shiftKey && e.key === 'S')) {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
         e.preventDefault();
       }
     };
@@ -38,6 +61,8 @@ export default function BaptismalRecords() {
 
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('copy', handleCopy);
       window.removeEventListener('beforeprint', handleBeforePrint);
       document.removeEventListener('keydown', handleKeyDown);
     };
@@ -47,32 +72,13 @@ export default function BaptismalRecords() {
     fetchRecords();
   }, [currentPage, searchTerm]);
 
-  // Check system preference for dark mode
-  useEffect(() => {
-    const checkDarkMode = () => {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
-    };
-
-    // Check initial preference
-    checkDarkMode();
-
-    // Listen for changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
   const fetchRecords = async () => {
     try {
-      setLoading(true);
+      if (searchTerm) {
+        setIsSearching(true);
+      } else {
+        setLoading(true);
+      }
       
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -80,7 +86,7 @@ export default function BaptismalRecords() {
         search: searchTerm
       });
       
-      const response = await fetch(`/api/baptism-records?${params.toString()}`);
+      const response = await fetch(`/api/v1/records/baptism?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch records');
@@ -89,30 +95,79 @@ export default function BaptismalRecords() {
       const data = await response.json();
       setRecords(data.records);
       setTotalRecords(data.total);
+      
+      // Add search term to active filters if it exists
+      if (searchTerm && !activeFilters.includes(searchTerm)) {
+        setActiveFilters(prev => [...prev, searchTerm]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+  
+  // Fetch search suggestions
+  const fetchSearchSuggestions = async (query: string) => {
+    if (query.length < 2) {
+      setSearchSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/v1/records/suggestions?q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const suggestions = await response.json();
+        setSearchSuggestions(suggestions.slice(0, 5)); // Limit to 5 suggestions
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      setSearchSuggestions([]);
+    }
   };
 
+  // Debounced search suggestions
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchInput && showSuggestions) {
+        fetchSearchSuggestions(searchInput);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput, showSuggestions]);
+
   const handleSearch = () => {
+    setIsSearching(true);
     setSearchTerm(searchInput);
     setCurrentPage(1);
+    setShowSuggestions(false);
+    
+    // Add to search history
+    if (searchInput.trim() && !searchHistory.includes(searchInput.trim())) {
+      setSearchHistory(prev => [searchInput.trim(), ...prev.slice(0, 4)]); // Keep last 5 searches
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchInput(suggestion);
+    setSearchTerm(suggestion);
+    setCurrentPage(1);
+    setShowSuggestions(false);
+    
+    // Add to search history
+    if (!searchHistory.includes(suggestion)) {
+      setSearchHistory(prev => [suggestion, ...prev.slice(0, 4)]);
     }
   };
 
@@ -120,6 +175,13 @@ export default function BaptismalRecords() {
     setSearchInput('');
     setSearchTerm('');
     setCurrentPage(1);
+    setShowSuggestions(false);
+    setSearchSuggestions([]);
+    setActiveFilters([]);
+  };
+
+  const removeFilter = (filter: string) => {
+    setActiveFilters(prev => prev.filter(f => f !== filter));
   };
 
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
@@ -158,9 +220,39 @@ export default function BaptismalRecords() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search */}
+        {/* Enhanced Search */}
         <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl shadow-xl border p-6 mb-8`}>
           <div className="space-y-4">
+            {/* Active Filters */}
+            {activeFilters.length > 0 && (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Active filters:</span>
+                {activeFilters.map((filter, index) => (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
+                      isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
+                    }`}
+                  >
+                    {filter}
+                    <button
+                      onClick={() => removeFilter(filter)}
+                      className={`ml-1 hover:${isDarkMode ? 'text-blue-100' : 'text-blue-600'}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+                <button
+                  onClick={() => setActiveFilters([])}
+                  className={`text-sm ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {/* Search Input with Suggestions */}
             <div className="space-y-3">
               <div className="relative">
                 <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'} h-5 w-5`} />
@@ -168,7 +260,12 @@ export default function BaptismalRecords() {
                   type="text"
                   placeholder="Search by full name (e.g., GEORGENA NGOZICHUKWUKA ONU)..."
                   value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
+                  onChange={(e) => {
+                    setSearchInput(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   onKeyPress={handleKeyPress}
                   className={`w-full pl-12 pr-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-blue-500 focus:border-transparent text-lg transition-all duration-200 ${
                     isDarkMode 
@@ -176,7 +273,65 @@ export default function BaptismalRecords() {
                       : 'border-gray-200 text-gray-900 placeholder-gray-500'
                   }`}
                 />
+                {isSearching && (
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                  </div>
+                )}
+
+                {/* Search Suggestions Dropdown */}
+                {showSuggestions && (searchSuggestions.length > 0 || searchHistory.length > 0) && (
+                  <div className={`absolute top-full left-0 right-0 mt-2 rounded-xl shadow-lg border z-10 max-h-60 overflow-y-auto ${
+                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                  }`}>
+                    {searchSuggestions.length > 0 && (
+                      <div>
+                        <div className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Suggestions
+                        </div>
+                        {searchSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            className={`w-full text-left px-4 py-3 hover:${
+                              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                            } transition-colors flex items-center gap-3`}
+                          >
+                            <Search className={`h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                            <span className={isDarkMode ? 'text-gray-200' : 'text-gray-900'}>{suggestion}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {searchHistory.length > 0 && (
+                      <div>
+                        <div className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          Recent Searches
+                        </div>
+                        {searchHistory.map((historyItem, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleSuggestionClick(historyItem)}
+                            className={`w-full text-left px-4 py-3 hover:${
+                              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                            } transition-colors flex items-center gap-3`}
+                          >
+                            <Database className={`h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                            <span className={isDarkMode ? 'text-gray-200' : 'text-gray-900'}>{historyItem}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Search Tips */}
               <div className={`flex flex-wrap gap-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 <span className={`${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-50'} px-2 py-1 rounded-full`}>
                   Works with: First name, Last name, or complete full name
@@ -184,15 +339,30 @@ export default function BaptismalRecords() {
                 <span className={`${isDarkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-50'} px-2 py-1 rounded-full`}>
                   Also searches: Parents' names and S/No
                 </span>
+                <span className={`${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-50'} px-2 py-1 rounded-full`}>
+                  Press ESC to close suggestions
+                </span>
               </div>
             </div>
+
+            {/* Search Actions */}
             <div className="flex gap-3">
               <button
                 onClick={handleSearch}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md font-medium"
+                disabled={isSearching}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Search className="h-5 w-5" />
-                Search Records
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-5 w-5" />
+                    Search Records
+                  </>
+                )}
               </button>
               {searchInput && (
                 <button
@@ -220,20 +390,75 @@ export default function BaptismalRecords() {
           </div>
         )}
 
-        {/* Results Summary */}
-        <div className="flex items-center justify-between mb-6">
-          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Showing <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{records.length}</span> of{' '}
-            <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totalRecords.toLocaleString()}</span> records
-          </div>
-          {searchTerm && (
-            <div className={`text-sm px-3 py-1 rounded-full ${
-              isDarkMode ? 'text-blue-400 bg-blue-900' : 'text-blue-600 bg-blue-50'
-            }`}>
-              Filtered by: "{searchTerm}"
+        {/* Enhanced Results Summary */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col gap-2">
+            <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Showing <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{records.length}</span> of{' '}
+              <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totalRecords.toLocaleString()}</span> records
             </div>
-          )}
+            {searchTerm && (
+              <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                Search results for <span className="font-medium">{searchTerm}</span>
+                {totalRecords === 0 && (
+                  <span className="ml-2 text-red-500">No results found</span>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {searchTerm && (
+              <div className={`text-sm px-3 py-1 rounded-full ${
+                isDarkMode ? 'text-blue-400 bg-blue-900' : 'text-blue-600 bg-blue-50'
+              }`}>
+                <span className="flex items-center gap-2">
+                  <Search className="h-3 w-3" />
+                  "{searchTerm}"
+                </span>
+              </div>
+            )}
+            
+            {isSearching && (
+              <div className="flex items-center gap-2 text-sm text-blue-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Searching...
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* No Results State */}
+        {searchTerm && records.length === 0 && !loading && (
+          <div className={`text-center py-12 rounded-xl border-2 border-dashed ${
+            isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-300 bg-gray-50'
+          }`}>
+            <div className="flex flex-col items-center gap-4">
+              <div className={`p-4 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                <Search className={`h-8 w-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              </div>
+              <div>
+                <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  No results found for "{searchTerm}"
+                </h3>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Try different keywords or check spelling
+                </p>
+              </div>
+              <div className={`flex flex-wrap gap-2 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                <span className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} px-3 py-2 rounded-lg border`}>
+                  💡 Try searching by first name only
+                </span>
+                <span className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} px-3 py-2 rounded-lg border`}>
+                  💡 Check for alternate spellings
+                </span>
+                <span className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} px-3 py-2 rounded-lg border`}>
+                  💡 Search by S/No if known
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Records Table - Responsive Design */}
         <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl shadow-xl border overflow-hidden`}>

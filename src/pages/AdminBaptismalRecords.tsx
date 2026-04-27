@@ -62,7 +62,7 @@ export default function AdminBaptismalRecords() {
         search: searchTerm
       });
       
-      const response = await fetch(`/api/baptism-records?${params.toString()}`);
+      const response = await fetch(`/api/v1/records/baptism?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch records');
@@ -80,7 +80,7 @@ export default function AdminBaptismalRecords() {
 
   const checkEmptyRecords = async () => {
     try {
-      const response = await fetch('/api/baptism-records?limit=1000');
+      const response = await fetch('/api/v1/records/baptism?limit=1000');
       const data = await response.json();
       
       const emptyRecords = data.records.filter((record: any) => 
@@ -114,7 +114,7 @@ export default function AdminBaptismalRecords() {
   const deleteRecord = async (id: number) => {
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/baptism-records?id=${id}`, {
+      const response = await fetch(`/api/v1/records/baptism?id=${id}`, {
         method: 'DELETE'
       });
       
@@ -140,7 +140,7 @@ export default function AdminBaptismalRecords() {
   const deleteAllEmptyRecords = async () => {
     setActionLoading(true);
     try {
-      const response = await fetch('/api/baptism-records?deleteEmpty=true', {
+      const response = await fetch('/api/v1/records/baptism?deleteEmpty=true', {
         method: 'DELETE'
       });
       
@@ -180,7 +180,7 @@ export default function AdminBaptismalRecords() {
         ? { ...formData, sNo: '' } // Empty sNo for auto-generation
         : formData; // Include manual sNo
       
-      const response = await fetch('/api/baptism-records', {
+      const response = await fetch('/api/v1/records/baptism', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -267,7 +267,7 @@ export default function AdminBaptismalRecords() {
     setActionLoading(true);
     
     try {
-      const response = await fetch(`/api/baptism-records?id=${editingRecord.id}`, {
+      const response = await fetch(`/api/v1/records/baptism?id=${editingRecord.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

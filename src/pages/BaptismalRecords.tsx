@@ -238,6 +238,8 @@ export default function BaptismalRecords() {
                     <button
                       onClick={() => removeFilter(filter)}
                       className={`ml-1 hover:${isDarkMode ? 'text-blue-100' : 'text-blue-600'}`}
+                      title={`Remove filter: ${filter}`}
+                      aria-label={`Remove filter: ${filter}`}
                     >
                       <X className="h-3 w-3" />
                     </button>

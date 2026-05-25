@@ -23,6 +23,12 @@ export default function BaptismalRecords() {
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
+  // DOB verification lock
+  const [pendingRecord, setPendingRecord] = useState<any | null>(null);
+  const [dobInput, setDobInput] = useState('');
+  const [dobError, setDobError] = useState('');
+  const [dobAttempts, setDobAttempts] = useState(0);
+
   const recordsPerPage = 20;
 
   // Anti-screenshot protection
@@ -182,6 +188,51 @@ export default function BaptismalRecords() {
 
   const removeFilter = (filter: string) => {
     setActiveFilters(prev => prev.filter(f => f !== filter));
+  };
+
+  const handleViewClick = (record: any) => {
+    setPendingRecord(record);
+    setDobInput('');
+    setDobError('');
+    setDobAttempts(0);
+  };
+
+  const handleDobVerify = () => {
+    if (!pendingRecord) return;
+
+    // Normalize stored DOB to YYYY-MM-DD for comparison
+    const storedDob = pendingRecord.dateOfBirth
+      ? new Date(pendingRecord.dateOfBirth).toISOString().split('T')[0]
+      : null;
+
+    // If no DOB on record, block access entirely
+    if (!storedDob) {
+      setDobError('Date of birth is not available for this record. Please contact the parish office.');
+      return;
+    }
+
+    if (dobInput === storedDob) {
+      setSelectedRecord(pendingRecord);
+      setPendingRecord(null);
+      setDobInput('');
+      setDobError('');
+      setDobAttempts(0);
+    } else {
+      const newAttempts = dobAttempts + 1;
+      setDobAttempts(newAttempts);
+      if (newAttempts >= 3) {
+        setDobError('Too many incorrect attempts. Please contact the parish office for assistance.');
+      } else {
+        setDobError(`Incorrect date of birth. ${3 - newAttempts} attempt${3 - newAttempts === 1 ? '' : 's'} remaining.`);
+      }
+    }
+  };
+
+  const handleDobCancel = () => {
+    setPendingRecord(null);
+    setDobInput('');
+    setDobError('');
+    setDobAttempts(0);
   };
 
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
@@ -567,7 +618,7 @@ export default function BaptismalRecords() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
-                          onClick={() => setSelectedRecord(record)}
+                          onClick={() => handleViewClick(record)}
                           className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md"
                           title="View record details"
                         >
@@ -619,7 +670,7 @@ export default function BaptismalRecords() {
                       </div>
                     </div>
                     <button
-                      onClick={() => setSelectedRecord(record)}
+                      onClick={() => handleViewClick(record)}
                       className="inline-flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md flex-shrink-0"
                       title="View record details"
                     >
@@ -681,6 +732,91 @@ export default function BaptismalRecords() {
           </div>
         )}
       </div>
+
+      {/* DOB Verification Modal */}
+      {pendingRecord && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl w-full max-w-md`}>
+            {/* Header */}
+            <div className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-blue-50 border-blue-100'} border-b rounded-t-2xl px-6 py-5 flex items-center gap-3`}>
+              <div className={`p-2 rounded-full ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <div>
+                <h2 className={`text-base font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Identity Verification</h2>
+                <p className={`text-xs mt-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Enter the date of birth for <span className="font-medium">{pendingRecord.baptismName} {pendingRecord.surname}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                To protect privacy, please enter the date of birth for this record to proceed.
+              </p>
+
+              <div>
+                <label className={`block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={dobInput}
+                  onChange={(e) => { setDobInput(e.target.value); setDobError(''); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && dobAttempts < 3) handleDobVerify(); }}
+                  disabled={dobAttempts >= 3}
+                  className={`w-full px-4 py-2.5 border-2 rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                    ${dobError ? 'border-red-400' : isDarkMode ? 'border-gray-600' : 'border-gray-200'}
+                    ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-900'}
+                    ${dobAttempts >= 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                />
+              </div>
+
+              {dobError && (
+                <div className={`flex items-start gap-2 text-sm px-3 py-2.5 rounded-lg ${
+                  dobAttempts >= 3
+                    ? isDarkMode ? 'bg-red-900/50 text-red-300' : 'bg-red-50 text-red-700'
+                    : isDarkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-50 text-yellow-700'
+                }`}>
+                  <span className="mt-0.5">⚠️</span>
+                  <span>{dobError}</span>
+                </div>
+              )}
+
+              {/* Attempt dots */}
+              {dobAttempts > 0 && dobAttempts < 3 && (
+                <div className="flex items-center gap-1.5">
+                  {[0,1,2].map(i => (
+                    <div key={i} className={`h-2 w-2 rounded-full ${i < dobAttempts ? 'bg-red-500' : isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`} />
+                  ))}
+                  <span className={`text-xs ml-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>incorrect attempts</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className={`px-6 py-4 border-t rounded-b-2xl flex gap-3 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+              <button
+                onClick={handleDobCancel}
+                className={`flex-1 px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-colors
+                  ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDobVerify}
+                disabled={!dobInput || dobAttempts >= 3}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              >
+                Verify &amp; View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Simplified Baptism Record Details Modal */}
       {selectedRecord && (

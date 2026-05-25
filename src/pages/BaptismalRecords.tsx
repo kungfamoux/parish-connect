@@ -539,11 +539,6 @@ export default function BaptismalRecords() {
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                       isDarkMode ? 'text-gray-300' : 'text-gray-700'
                     }`}>
-                      Date of Birth
-                    </th>
-                    <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
                       Place of Baptism
                     </th>
                     <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
@@ -595,11 +590,6 @@ export default function BaptismalRecords() {
                         isDarkMode ? 'text-gray-300' : 'text-gray-900'
                       }`}>
                         {formatDate(record.dateOfBaptism)}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-900'
-                      }`}>
-                        {formatDate(record.dateOfBirth)}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm ${
                         isDarkMode ? 'text-gray-300' : 'text-gray-900'

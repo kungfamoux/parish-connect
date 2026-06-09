@@ -32,6 +32,8 @@ import BaptismalRecords from "./pages/BaptismalRecords";
 
 import PastoralCouncil from "./pages/PastoralCouncil";
 
+import ZonalCouncil from "./pages/ZonalCouncil";
+
 import AdminBaptismalRecords from "./pages/AdminBaptismalRecords";
 
 import AdminAnalytics from "./pages/AdminAnalytics";
@@ -79,6 +81,8 @@ const App = () => (
           <Route path="/baptismal-records" element={<BaptismalRecords />} />
 
           <Route path="/pastoral-council" element={<PastoralCouncil />} />
+
+          <Route path="/zonal-council" element={<ZonalCouncil />} />
 
           <Route path="/admin/baptismal-records" element={<AdminBaptismalRecords />} />
 

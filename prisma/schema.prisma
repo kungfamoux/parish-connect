@@ -62,3 +62,27 @@ model ParishPastoralCouncil {
   @@index([name])
   @@index([position])
 }
+
+model ZonalCouncilMember {
+  id           Int      @id @default(autoincrement())
+  sNo          Int      @map("S_NO")
+  name         String?  @map("NAME")
+  isVacant     Boolean  @default(false) @map("IS_VACANT")
+  position     String   @map("POSITION")
+  phone        String?  @map("PHONE")
+  recordType   String   @map("RECORD_TYPE")
+  zone         String?  @map("ZONE")
+  groupName    String   @map("GROUP_NAME")
+  electionYear Int     @map("ELECTION_YEAR")
+  isActive     Boolean  @default(true) @map("IS_ACTIVE")
+  createdAt    DateTime @default(now()) @map("CREATED_AT")
+  updatedAt    DateTime @updatedAt @map("UPDATED_AT")
+
+  @@map("zonal_council_members")
+  @@index([sNo])
+  @@index([name])
+  @@index([position])
+  @@index([zone])
+  @@index([groupName])
+  @@index([electionYear])
+}

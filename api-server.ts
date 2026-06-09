@@ -25,6 +25,27 @@ const prisma = new PrismaClient({
 });
 
 // API Routes
+app.get('/api/zonal-council', async (req, res) => {
+  try {
+    const members = await prisma.zonalCouncilMember.findMany({
+      where: {
+        isActive: true,
+        electionYear: 2026
+      },
+      orderBy: [
+        { zone: 'asc' },
+        { groupName: 'asc' },
+        { sNo: 'asc' }
+      ]
+    });
+
+    res.json(members);
+  } catch (error) {
+    console.error('Error fetching zonal council members:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/baptism-records', async (req, res) => {
   try {
     const page = parseInt(req.query.page as string) || 1;

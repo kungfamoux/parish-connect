@@ -1,10 +1,7 @@
 // Zonal Council API
 import { PrismaClient } from '@prisma/client';
-import { withAccelerate } from '@prisma/extension-accelerate';
 
-const prisma = new PrismaClient({
-  accelerateUrl: process.env.DATABASE_URL,
-}).$extends(withAccelerate());
+const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   // Handle GET request for fetching zonal council members

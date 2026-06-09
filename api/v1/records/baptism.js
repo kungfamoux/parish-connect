@@ -602,6 +602,10 @@ const handler = async (req, res) => {
       }));
 
       console.log(`Found ${safeRecords.length} records out of ${totalRecords} total`);
+      console.log('Response data:', {
+        records: safeRecords.length,
+        total: totalRecords
+      });
 
       res.status(200).json({
         records: safeRecords,

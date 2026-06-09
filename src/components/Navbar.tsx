@@ -16,7 +16,7 @@ const navLinks = [
 
   { label: "Baptismal Records", path: "/baptismal-records" },
 
-  { label: "Pastoral Council", path: "/pastoral-council" },
+  { label: "Zonal Council", path: "/zonal-council" },
 
   { label: "Mass Schedule", path: "/mass-schedule" },
 

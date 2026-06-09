@@ -1,12 +1,12 @@
 // Zonal Council API
-import { corsMiddleware } from '../../middleware/cors.js';
-import { withDatabase } from '../../middleware/database.js';
-import { errorHandler } from '../../middleware/errorHandler.js';
-import { successResponse, errorResponse } from '../../utils/response.js';
+import { PrismaClient } from '@prisma/client';
+import { withAccelerate } from '@prisma/extension-accelerate';
 
-const handler = async (req, res) => {
-  const { prisma } = req;
+const prisma = new PrismaClient({
+  accelerateUrl: process.env.DATABASE_URL,
+}).$extends(withAccelerate());
 
+export default async function handler(req, res) {
   // Handle GET request for fetching zonal council members
   if (req.method === 'GET') {
     try {
@@ -22,16 +22,14 @@ const handler = async (req, res) => {
         ]
       });
 
-      return res.status(200).json(members);
+      res.status(200).json(members);
     } catch (error) {
       console.error('Error fetching zonal council members:', error);
-      return res.status(500).json(errorResponse('Failed to fetch zonal council members', 500));
+      res.status(500).json({ error: 'Failed to fetch zonal council members', details: error.message });
+    } finally {
+      await prisma.$disconnect();
     }
+  } else {
+    res.status(405).json({ error: 'Method not allowed' });
   }
-
-  // Handle unsupported methods
-  return res.status(405).json(errorResponse('Method not allowed', 405));
-};
-
-// Apply middleware
-export default corsMiddleware(withDatabase(errorHandler(handler)));
+}

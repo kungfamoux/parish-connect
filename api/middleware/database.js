@@ -10,12 +10,14 @@ export const withDatabase = (handler) => async (req, res) => {
 
   let prisma;
   try {
-    // Initialize Prisma client
+    // Initialize Prisma client with accelerate extension
     const { PrismaClient } = await import('@prisma/client');
+    const { withAccelerate } = await import('@prisma/extension-accelerate');
+    
     prisma = new PrismaClient({
       accelerateUrl: process.env.DATABASE_URL,
       log: ['info', 'warn', 'error'],
-    });
+    }).$extends(withAccelerate());
 
     await prisma.$connect();
 

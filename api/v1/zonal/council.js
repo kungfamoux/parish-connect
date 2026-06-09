@@ -22,7 +22,7 @@ const handler = async (req, res) => {
         ]
       });
 
-      return res.status(200).json(successResponse(members, 'Zonal council members fetched successfully'));
+      return res.status(200).json(members);
     } catch (error) {
       console.error('Error fetching zonal council members:', error);
       return res.status(500).json(errorResponse('Failed to fetch zonal council members', 500));

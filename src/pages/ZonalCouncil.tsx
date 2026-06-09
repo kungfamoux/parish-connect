@@ -37,7 +37,7 @@ export default function ZonalCouncil() {
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch('/api/zonal-council');
+      const response = await fetch('/api/v1/zonal/council');
       if (!response.ok) throw new Error('Failed to fetch members');
       const data = await response.json();
       setMembers(data);

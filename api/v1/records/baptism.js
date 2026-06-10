@@ -479,9 +479,7 @@ const handler = async (req, res) => {
       console.log('Search:', search);
 
       // Build search conditions
-      let whereConditions = {
-        baptismName: { not: null }
-      };
+      let whereConditions = {};
 
       if (search && search.trim() !== '') {
         const searchTerm = search.trim();

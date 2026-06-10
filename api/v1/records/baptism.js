@@ -4,6 +4,12 @@ import { withDatabase } from '../../middleware/database.js';
 import { errorHandler } from '../../middleware/errorHandler.js';
 import { validateRequired } from '../../utils/validation.js';
 import { successResponse, errorResponse, paginatedResponse } from '../../utils/response.js';
+import { PrismaClient } from '@prisma/client/edge';
+import { withAccelerate } from '@prisma/extension-accelerate';
+
+const getPrisma = () => new PrismaClient({
+  accelerateUrl: process.env.DATABASE_URL,
+}).$extends(withAccelerate());
 
 const handler = async (req, res) => {
   const { prisma } = req;
@@ -13,26 +19,20 @@ const handler = async (req, res) => {
     try {
       const body = req.body;
 
-      // Validate required fields
       const validation = validateRequired(body, ['baptismName', 'surname']);
       if (!validation.isValid) {
         return res.status(400).json(errorResponse(validation.message, 400, validation.missingFields));
       }
 
-      // Handle S_NO - either manual or auto-generated
       let finalSNo = null;
 
       if (body.sNo && body.sNo.trim() !== '') {
-        // Manual S_NO provided by admin
         finalSNo = parseInt(body.sNo.trim());
 
         if (isNaN(finalSNo) || finalSNo <= 0) {
-          return res.status(400).json({
-            error: 'Invalid S_NO. Must be a positive number.'
-          });
+          return res.status(400).json({ error: 'Invalid S_NO. Must be a positive number.' });
         }
 
-        // Check if this S_NO already exists
         const existingRecord = await prisma.baptismRecord.findUnique({
           where: { sNo: finalSNo },
           select: { id: true }
@@ -46,7 +46,6 @@ const handler = async (req, res) => {
 
         console.log(`Using manually provided S_NO: ${finalSNo}`);
       } else {
-        // Auto-generate S_NO using sequence approach
         let attempts = 0;
         const maxAttempts = 50;
 
@@ -65,17 +64,14 @@ const handler = async (req, res) => {
                 existingSNos.sort((a, b) => a - b);
 
                 for (let i = 0; i < existingSNos.length; i++) {
-                  const expectedSNo = i + 1;
-                  if (existingSNos[i] !== expectedSNo) {
-                    nextSNo = expectedSNo;
-                    console.log(`Found gap in sequence: expected ${expectedSNo}, found ${existingSNos[i]}, using ${nextSNo}`);
+                  if (existingSNos[i] !== i + 1) {
+                    nextSNo = i + 1;
                     break;
                   }
                 }
 
-                if (nextSNo === 1) {
+                if (nextSNo === 1 && existingSNos[0] === 1) {
                   nextSNo = existingSNos[existingSNos.length - 1] + 1;
-                  console.log(`No gaps found, using next number after highest: ${nextSNo}`);
                 }
               }
 
@@ -85,7 +81,6 @@ const handler = async (req, res) => {
               });
 
               if (existingCheck) {
-                console.log(`S_NO ${nextSNo} already taken, scanning for next available`);
                 let candidateSNo = nextSNo + 1;
                 while (candidateSNo <= nextSNo + 100) {
                   const checkAgain = await tx.baptismRecord.findUnique({
@@ -94,18 +89,12 @@ const handler = async (req, res) => {
                   });
                   if (!checkAgain) {
                     nextSNo = candidateSNo;
-                    console.log(`Found available S_NO: ${nextSNo}`);
                     break;
                   }
                   candidateSNo++;
                 }
-
-                if (candidateSNo > nextSNo + 100) {
-                  throw new Error('Could not find available S_NO after checking 100 consecutive numbers');
-                }
               }
 
-              console.log(`Attempting to create record with auto-generated S_NO: ${nextSNo}`);
               return nextSNo;
             });
 
@@ -113,12 +102,7 @@ const handler = async (req, res) => {
 
           } catch (createError) {
             attempts++;
-            console.log(`Auto-generation attempt ${attempts}/${maxAttempts} failed:`, createError.code || createError.message);
-
-            if (createError.code !== 'P2002' || attempts >= maxAttempts) {
-              throw createError;
-            }
-
+            if (createError.code !== 'P2002' || attempts >= maxAttempts) throw createError;
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
@@ -128,7 +112,6 @@ const handler = async (req, res) => {
         }
       }
 
-      // Create the baptismal record
       const newRecord = await prisma.baptismRecord.create({
         data: {
           sNo: finalSNo,
@@ -160,45 +143,28 @@ const handler = async (req, res) => {
         }
       });
 
-      console.log('New baptismal record created successfully:', {
+      console.log('New baptismal record created:', {
         id: newRecord.id,
         sNo: newRecord.sNo,
         name: `${newRecord.baptismName} ${newRecord.surname}`,
         sNoType: body.sNo ? 'manual' : 'auto-generated'
       });
 
-      res.status(201).json({
-        message: 'Baptismal record created successfully',
-        record: newRecord
-      });
+      res.status(201).json({ message: 'Baptismal record created successfully', record: newRecord });
 
     } catch (error) {
       console.error('=== POST ERROR ===');
       console.error('Error type:', error.constructor.name);
       console.error('Error message:', error.message);
-
-      res.status(500).json({
-        error: 'Internal server error',
-        message: error.message,
-        type: error.constructor.name
-      });
+      res.status(500).json({ error: 'Internal server error', message: error.message, type: error.constructor.name });
     }
     return;
   }
 
   // Handle GET request for fetching baptismal records
   if (req.method === 'GET') {
-    let prismaLocal;
+    const prismaLocal = getPrisma();
     try {
-      const { PrismaClient } = await import('@prisma/client');
-
-      prismaLocal = new PrismaClient({
-        datasourceUrl: process.env.DATABASE_URL,
-        log: ['info', 'warn', 'error'],
-      });
-
-      await prismaLocal.$connect();
-
       const { page = 1, limit = 20, search = '' } = req.query;
       const currentPage = parseInt(page);
       const recordsPerPage = parseInt(limit);
@@ -221,10 +187,7 @@ const handler = async (req, res) => {
             ]
           };
 
-          const exactMatch = await prismaLocal.baptismRecord.findMany({
-            where: exactMatchConditions,
-            take: 1
-          });
+          const exactMatch = await prismaLocal.baptismRecord.findMany({ where: exactMatchConditions, take: 1 });
 
           whereConditions = exactMatch.length > 0
             ? exactMatchConditions
@@ -309,21 +272,14 @@ const handler = async (req, res) => {
       console.error('=== GET ERROR ===');
       console.error('Error type:', error.constructor.name);
       console.error('Error message:', error.message);
-
-      res.status(500).json({
-        error: 'Internal server error',
-        message: error.message,
-        type: error.constructor.name
-      });
-    } finally {
-      if (prismaLocal) await prismaLocal.$disconnect();
+      res.status(500).json({ error: 'Internal server error', message: error.message, type: error.constructor.name });
     }
     return;
   }
 
   // Handle PUT request for updating baptismal records
   if (req.method === 'PUT') {
-    let prismaLocal;
+    const prismaLocal = getPrisma();
     try {
       const { id } = req.query;
       const body = req.body;
@@ -332,17 +288,7 @@ const handler = async (req, res) => {
         return res.status(400).json({ error: 'Missing record ID or update data' });
       }
 
-      const { PrismaClient } = await import('@prisma/client');
-      prismaLocal = new PrismaClient({
-        datasourceUrl: process.env.DATABASE_URL,
-        log: ['info', 'warn', 'error'],
-      });
-
-      await prismaLocal.$connect();
-
-      const existingRecord = await prismaLocal.baptismRecord.findUnique({
-        where: { id: parseInt(id) }
-      });
+      const existingRecord = await prismaLocal.baptismRecord.findUnique({ where: { id: parseInt(id) } });
 
       if (!existingRecord) {
         return res.status(404).json({ error: 'Baptismal record not found' });
@@ -379,36 +325,26 @@ const handler = async (req, res) => {
         }
       });
 
-      console.log('Baptismal record updated successfully:', {
+      console.log('Baptismal record updated:', {
         id: updatedRecord.id,
         sNo: updatedRecord.sNo,
         name: `${updatedRecord.baptismName} ${updatedRecord.surname}`
       });
 
-      res.status(200).json({
-        message: 'Baptismal record updated successfully',
-        record: updatedRecord
-      });
+      res.status(200).json({ message: 'Baptismal record updated successfully', record: updatedRecord });
 
     } catch (error) {
       console.error('=== PUT ERROR ===');
       console.error('Error type:', error.constructor.name);
       console.error('Error message:', error.message);
-
-      res.status(500).json({
-        error: 'Internal server error',
-        message: error.message,
-        type: error.constructor.name
-      });
-    } finally {
-      if (prismaLocal) await prismaLocal.$disconnect();
+      res.status(500).json({ error: 'Internal server error', message: error.message, type: error.constructor.name });
     }
     return;
   }
 
   // Handle DELETE request for deleting baptismal records
   if (req.method === 'DELETE') {
-    let prismaLocal;
+    const prismaLocal = getPrisma();
     try {
       const { id } = req.query;
 
@@ -416,49 +352,27 @@ const handler = async (req, res) => {
         return res.status(400).json({ error: 'Missing record ID' });
       }
 
-      const { PrismaClient } = await import('@prisma/client');
-      prismaLocal = new PrismaClient({
-        datasourceUrl: process.env.DATABASE_URL,
-        log: ['info', 'warn', 'error'],
-      });
-
-      await prismaLocal.$connect();
-
-      const existingRecord = await prismaLocal.baptismRecord.findUnique({
-        where: { id: parseInt(id) }
-      });
+      const existingRecord = await prismaLocal.baptismRecord.findUnique({ where: { id: parseInt(id) } });
 
       if (!existingRecord) {
         return res.status(404).json({ error: 'Baptismal record not found' });
       }
 
-      await prismaLocal.baptismRecord.delete({
-        where: { id: parseInt(id) }
-      });
+      await prismaLocal.baptismRecord.delete({ where: { id: parseInt(id) } });
 
-      console.log('Baptismal record deleted successfully:', {
+      console.log('Baptismal record deleted:', {
         id: existingRecord.id,
         sNo: existingRecord.sNo,
         name: `${existingRecord.baptismName} ${existingRecord.surname}`
       });
 
-      res.status(200).json({
-        message: 'Baptismal record deleted successfully',
-        record: existingRecord
-      });
+      res.status(200).json({ message: 'Baptismal record deleted successfully', record: existingRecord });
 
     } catch (error) {
       console.error('=== DELETE ERROR ===');
       console.error('Error type:', error.constructor.name);
       console.error('Error message:', error.message);
-
-      res.status(500).json({
-        error: 'Internal server error',
-        message: error.message,
-        type: error.constructor.name
-      });
-    } finally {
-      if (prismaLocal) await prismaLocal.$disconnect();
+      res.status(500).json({ error: 'Internal server error', message: error.message, type: error.constructor.name });
     }
     return;
   }

@@ -4,7 +4,7 @@ import { withDatabase } from '../../middleware/database.js';
 import { errorHandler } from '../../middleware/errorHandler.js';
 import { validateRequired } from '../../utils/validation.js';
 import { successResponse, errorResponse, paginatedResponse } from '../../utils/response.js';
-import { PrismaClient } from '@prisma/client/edge';
+import { PrismaClient } from '@prisma/client';
 import { withAccelerate } from '@prisma/extension-accelerate';
 
 const getPrisma = () => new PrismaClient({

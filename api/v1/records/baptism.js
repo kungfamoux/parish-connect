@@ -193,7 +193,7 @@ const handler = async (req, res) => {
       const { PrismaClient } = await import('@prisma/client');
 
       prismaLocal = new PrismaClient({
-        datasources: { db: { url: process.env.DATABASE_URL } },
+        datasourceUrl: process.env.DATABASE_URL,
         log: ['info', 'warn', 'error'],
       });
 
@@ -334,7 +334,7 @@ const handler = async (req, res) => {
 
       const { PrismaClient } = await import('@prisma/client');
       prismaLocal = new PrismaClient({
-        datasources: { db: { url: process.env.DATABASE_URL } },
+        datasourceUrl: process.env.DATABASE_URL,
         log: ['info', 'warn', 'error'],
       });
 
@@ -418,7 +418,7 @@ const handler = async (req, res) => {
 
       const { PrismaClient } = await import('@prisma/client');
       prismaLocal = new PrismaClient({
-        datasources: { db: { url: process.env.DATABASE_URL } },
+        datasourceUrl: process.env.DATABASE_URL,
         log: ['info', 'warn', 'error'],
       });
 

@@ -457,14 +457,17 @@ const handler = async (req, res) => {
   if (req.method === 'GET') {
     let prisma;
     try {
-      // Initialize Prisma client with accelerate extension
+      // Initialize Prisma client
       const { PrismaClient } = await import('@prisma/client');
-      const { withAccelerate } = await import('@prisma/extension-accelerate');
       
       prisma = new PrismaClient({
-        accelerateUrl: process.env.DATABASE_URL,
+        datasources: {
+          db: {
+            url: process.env.DATABASE_URL
+          }
+        },
         log: ['info', 'warn', 'error'],
-      }).$extends(withAccelerate());
+      });
 
       await prisma.$connect();
 

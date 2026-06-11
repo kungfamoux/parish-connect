@@ -48,8 +48,22 @@ export default function ZonalCouncil() {
     }
   };
 
+  const getZoneNumber = (zone?: string | null) => {
+    if (!zone) return Number.POSITIVE_INFINITY;
+    const match = zone.match(/zone\s*(\d+)/i);
+    return match ? Number.parseInt(match[1], 10) : Number.POSITIVE_INFINITY;
+  };
+
   // Get unique zones
-  const zones = ['all', ...Array.from(new Set(members.map(m => m.zone).filter(Boolean)))].sort();
+  const zones = [
+    'all',
+    ...Array.from(new Set(members.map((m) => m.zone).filter(Boolean))).sort((a, b) => {
+      const zoneA = getZoneNumber(a);
+      const zoneB = getZoneNumber(b);
+      if (zoneA !== zoneB) return zoneA - zoneB;
+      return String(a).localeCompare(String(b), undefined, { sensitivity: 'base' });
+    }),
+  ];
 
   // Get unique groups
   const groups = ['all', ...Array.from(new Set(members.map(m => m.groupName).filter(Boolean)))].sort();
@@ -82,6 +96,13 @@ export default function ZonalCouncil() {
     acc[zone][group].push(member);
     return acc;
   }, {} as Record<string, Record<string, any[]>>);
+
+  const orderedZones = Object.keys(groupedMembers).sort((a, b) => {
+    const zoneA = getZoneNumber(a);
+    const zoneB = getZoneNumber(b);
+    if (zoneA !== zoneB) return zoneA - zoneB;
+    return a.localeCompare(b, undefined, { sensitivity: 'base' });
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -194,7 +215,9 @@ export default function ZonalCouncil() {
         {/* Members Display */}
         {!loading && !error && (
           <div className="space-y-8">
-            {Object.entries(groupedMembers).map(([zone, groups]) => (
+            {orderedZones.map((zone) => {
+              const groups = groupedMembers[zone];
+              return (
               <div key={zone} className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -203,7 +226,9 @@ export default function ZonalCouncil() {
                   </h2>
                 </div>
                 
-                {Object.entries(groups).map(([groupName, groupMembers]) => (
+                {Object.entries(groups)
+                  .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                  .map(([groupName, groupMembers]) => (
                   <div key={groupName} className="border-b border-gray-200 last:border-b-0">
                     <div className="bg-gray-50 px-6 py-3">
                       <h3 className="text-lg font-semibold text-gray-800">{groupName}</h3>
@@ -294,7 +319,8 @@ export default function ZonalCouncil() {
                   </div>
                 ))}
               </div>
-            ))}
+            );
+            })}
 
             {filteredMembers.length === 0 && (
               <div className="text-center py-16">

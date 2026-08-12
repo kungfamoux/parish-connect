@@ -59,14 +59,14 @@ const ParishPriests = () => (
           <p className="font-display text-lg text-muted-foreground leading-relaxed mb-8">
             Since becoming a full parish in 1988, St. Mary Catholic Parish has been blessed with dedicated spiritual leaders 
             who have guided our community through decades of growth, faith, and service. This chronology honors the 
-            33 priests who have faithfully served our parish — 8 Parish Priests and 25 Assistant Priests.
+            35 priests who have faithfully served our parish — 9 Parish Priests and 26 Assistant Priests.
           </p>
 
           <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
             {[
-              { number: "33", label: "Total Priests", icon: Users },
-              { number: "8", label: "Parish Priests", icon: Church },
-              { number: "25", label: "Assistant Priests", icon: Users }
+              { number: "35", label: "Total Priests", icon: Users },
+              { number: "9", label: "Parish Priests", icon: Church },
+              { number: "26", label: "Assistant Priests", icon: Users }
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -138,11 +138,13 @@ const ParishPriests = () => (
                       ["26", "Rev. Fr. Afamefuna Malunze", "Asst. Parish Priest", "Jan 2016 – Feb 2018"],
                       ["27", "Rev. Fr. Paul Obichukwu Mba", "Asst. Parish Priest", "Feb 2018 – Feb 2019"],
                       ["28", "Rev. Fr. Daniel Ogbodo", "Asst. Parish Priest", "Feb 2019 – Feb 2020"],
-                      ["29", "Very Rev. Msgr. Anthony Anijielo", "Parish Priest", "Feb 2020 – Date"],
+                      ["29", "Very Rev. Msgr. Anthony Anijielo", "Parish Priest", "Feb 2020 – 2025"],
                       ["30", "Rev. Fr. Paul Uche", "Asst. Parish Priest", "Feb. 2020 – 2021"],
                       ["31", "Rev. Fr. Onyeka Onyia", "Asst. Parish Priest", "Feb. 2021 – 2022"],
                       ["32", "Rev. Fr. Nichodemus Nnaji", "Asst. Parish Priest", "Feb. 2022 – 2023"],
-                      ["33", "Rev. Fr. Chinonso Odoh", "Asst. Parish Priest", "Feb. 2023 – Date"]
+                      ["33", "Rev. Fr. Chinonso Odoh", "Asst. Parish Priest", "Feb. 2024 – 2025"],
+                      ["34", "Rev. Fr. Paul Ejike Eze", "Asst. Parish Priest", "Aug 2025 – Date"],
+                      ["35", "Rev. Fr. Paul Ifeonu", "Parish Priest", "2025 – Present - Godfrey Okoye University Teaching Hospital"]
                     ].map((priest, index) => (
                       <motion.tr
                         key={priest[0]}
@@ -189,16 +191,10 @@ const ParishPriests = () => (
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {[
               {
-                name: "Very Rev. Msgr. Anthony Anijielo",
+                name: "Rev. Fr. Paul Ifeonu",
                 role: "Parish Priest",
-                period: "Feb 2020 - Present",
-                description: "Leading our parish with wisdom and spiritual guidance"
-              },
-              {
-                name: "Rev. Fr. Chinonso Odoh",
-                role: "Assistant Parish Priest",
-                period: "Feb 2023 - Present",
-                description: "Supporting our community through dedicated service"
+                period: "Present - Godfrey Okoye University Teaching Hospital",
+                description: "Leading our parish with wisdom and spiritual guidance at Godfrey Okoye University Teaching Hospital"
               }
             ].map((priest, index) => (
               <motion.div

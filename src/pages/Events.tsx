@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, Clock, Megaphone, Bell, Users, Heart } from "lucide-react";
+import { Calendar, Clock, Megaphone, Bell, Users, Heart, Church } from "lucide-react";
 import Layout from "@/components/Layout";
 import SectionHeading from "@/components/SectionHeading";
 
@@ -54,9 +54,15 @@ const Events = () => (
               {[
                 {
                   title: "Sunday Mass Schedule",
-                  description: "Join us for Sunday masses at 6:00 AM (Igbo), 8:00 AM (Igbo), 10:00 AM (English/Latin), and 6:00 PM (English)",
+                  description: "Join us for Sunday masses at 6:00 AM (Igbo), 8:00 AM (Igbo), 8:30 AM (Children's Mass), 10:00 AM (English/Latin), and 6:00 PM (English)",
                   icon: Calendar,
                   time: "Every Sunday"
+                },
+                {
+                  title: "Children's Mass",
+                  description: "Special mass for children and families held every Sunday at 8:30 AM",
+                  icon: Church,
+                  time: "Sundays 8:30 AM"
                 },
                 {
                   title: "Weekday Masses",
@@ -67,7 +73,7 @@ const Events = () => (
                 {
                   title: "Vespers & Benediction",
                   description: "Join us for Sunday evening vespers and benediction from 5:00 PM - 6:00 PM",
-                  icon: Heart,
+                  icon: Clock,
                   time: "Sundays 5:00 PM"
                 }
               ].map((item, index) => (

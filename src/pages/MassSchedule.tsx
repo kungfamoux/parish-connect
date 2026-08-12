@@ -9,7 +9,8 @@ type FilterType = "all" | "mass" | "baptism" | "marriage" | "catechism" | "meeti
 const scheduleData = [
   // Sunday Masses
   { type: "mass" as const, day: "Sunday", time: "6:00 AM", language: "Igbo", note: "1st Mass (Adult)", icon: Church },
-  { type: "mass" as const, day: "Sunday", time: "8:00 AM", language: "Igbo", note: "2nd Mass (Adult & Children)", icon: Church },
+  { type: "mass" as const, day: "Sunday", time: "8:00 AM", language: "Igbo", note: "2nd Mass (Adult)", icon: Church },
+  { type: "mass" as const, day: "Sunday", time: "8:30 AM", language: "Igbo", note: "Children's Mass", icon: Church },
   { type: "mass" as const, day: "Sunday", time: "10:00 AM", language: "English/Latin", note: "3rd Mass (Adult)", icon: Church },
   { type: "mass" as const, day: "Sunday", time: "6:00 PM", language: "English", note: "4th Mass (Adult)", icon: Church },
   

@@ -40,8 +40,8 @@ export default function PastoralCouncil() {
 
   // Static pastoral council members data
   const staticMembers = [
-    { id: 1, sNo: 1, name: "Rev. Fr. Paul Ifeonu", zone: null, position: "Parish Priest Chairman" },
-    { id: 2, sNo: 2, name: "Very Rev. Msgr. Anthony Anijielo", zone: null, position: "Vicar Member" },
+    { id: 1, sNo: 1, name: "Very Rev. Dr. Msgr. Anthony Chukwuma Anijielo", zone: null, position: "Parish Priest Chairman" },
+    { id: 2, sNo: 2, name: "Rev. Fr. Paul Ifeonu", zone: null, position: "Assistant Parish Priest" },
     { id: 3, sNo: 3, name: "Sr Ifendu Ohabuike", zone: null, position: "DDL Member" },
     { id: 4, sNo: 4, name: "Mr Paul Agu", zone: "Zone 12", position: "1st Vice Chairman" },
     { id: 5, sNo: 5, name: "Chief (Sir) O.O. Apiakason", zone: "Zone 1", position: "2nd Vice Chairman" },

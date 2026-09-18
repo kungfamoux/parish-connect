@@ -145,8 +145,8 @@ const ParishPriests = () => (
                       ["31", "Rev. Fr. Onyeka Onyia", "Asst. Parish Priest", "Feb. 2021 – 2022"],
                       ["32", "Rev. Fr. Nichodemus Nnaji", "Asst. Parish Priest", "Feb. 2022 – 2023"],
                       ["33", "Rev. Fr. Chinonso Odoh", "Asst. Parish Priest", "Feb. 2023 – 2024"],
-                      ["34", "Rev. Fr. Paul Ejike Eze", "Asst. Parish Priest", "Aug 2024 – 2025"],
-                      ["35", "Rev. Fr. Paul Ifeonu", "Asst. Parish Priest", "2025 – - 2026"],
+                      ["34", "Rev. Fr. Paul Ejike Eze", "resident priest", "Aug 2022 – 2026"],
+                      ["35", "Rev. Fr. Paul Ifeonu", "resident priest", "2026- till date"],
                       ["36", "Rev. Fr. Daniel Onah", "Asst. Parish Priest", "2026 – Present"]
                     ].map((priest, index) => (
                       <motion.tr

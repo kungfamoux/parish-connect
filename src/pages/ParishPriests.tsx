@@ -61,14 +61,15 @@ const ParishPriests = () => (
           <p className="font-display text-lg text-muted-foreground leading-relaxed mb-8">
             Since becoming a full parish in 1988, St. Mary Catholic Parish has been blessed with dedicated spiritual leaders 
             who have guided our community through decades of growth, faith, and service. This chronology honors the 
-            36 priests who have faithfully served our parish — 8 Parish Priests and 28 Assistant Priests.
+            38 priests who have faithfully served our parish — 7 Parish Priests, 29 Assistant Priests, and 2 Resident Priests.
           </p>
 
-          <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
             {[
-              { number: "36", label: "Total Priests", icon: Users },
-              { number: "8", label: "Parish Priests", icon: Church },
-              { number: "28", label: "Assistant Priests", icon: Users }
+              { number: "38", label: "Total Priests", icon: Users },
+              { number: "7", label: "Parish Priests", icon: Church },
+              { number: "29", label: "Assistant Priests", icon: Users },
+              { number: "2", label: "Resident Priests", icon: Users }
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -165,6 +166,8 @@ const ParishPriests = () => (
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                             priest[2] === "Parish Priest" 
                               ? "bg-parish-burgundy/20 text-parish-burgundy border border-parish-burgundy/30" 
+                              : priest[2] === "resident priest"
+                              ? "bg-green-600/20 text-green-700 border border-green-600/30"
                               : "bg-accent/20 text-accent border border-accent/30"
                           }`}>
                             {priest[2]}
